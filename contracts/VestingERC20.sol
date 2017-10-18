@@ -2,7 +2,7 @@ pragma solidity ^0.4.11;
 
 import './base/token/StandardToken.sol';
 import './base/math/SafeMath.sol';
-import './base/ownership/Ownable.sol';
+import './base/lifecycle/Pausable.sol';
 
 /**
  * @title VestingERC20
@@ -10,7 +10,7 @@ import './base/ownership/Ownable.sol';
  * @dev The tokens are unlocked continuously to the vester.
  * @dev The contract host the tokens that are locked for the vester.
  */
-contract VestingERC20 is Ownable{
+contract VestingERC20 is Pausable{
     using SafeMath for uint256;
     using SafeMath for uint64;
 
@@ -21,6 +21,7 @@ contract VestingERC20 is Ownable{
     struct Grant {
         uint256 amountInitial;     
         uint64 startTime;
+        uint64 cliffTime;
         uint64 endTime;
         uint256 amountWithdraw;
     }
@@ -28,8 +29,8 @@ contract VestingERC20 is Ownable{
 
     uint256 public amountTotalLocked; // total of token locked on the contract
 
-    event NewGrant(address _to,uint256 _amountInitial,uint64 _startTime, uint64 _endTime);
-    event GrantRevoked(address _to);
+    event NewGrant(address to, uint256 amountInitial, uint64 startTime, uint64 cliffTime, uint64 endTime);
+    event GrantRevoked(address to);
 
 
     function VestingERC20(ERC20 _token) 
@@ -54,12 +55,16 @@ contract VestingERC20 is Ownable{
             address _to,   
             uint256 _amountInitial,
             uint64 _startTime,
+            uint64 _cliffTime,
             uint64 _endTime) 
         public
         onlyOwner
+        whenNotPaused
     {
         require(_to != 0);
         require(_startTime < _endTime);
+        require(_cliffTime <= _endTime);
+        require(_startTime <= _cliffTime);
         require(_amountInitial != 0);
 
         // sender does not hava a grant yet
@@ -68,12 +73,12 @@ contract VestingERC20 is Ownable{
         // check if there is enough token not locked
         require(amountTotalLocked.add(_amountInitial) <= getTokenOnContract());
 
-        grants[_to] = Grant(_amountInitial, _startTime, _endTime, 0);
+        grants[_to] = Grant(_amountInitial, _startTime, _cliffTime, _endTime, 0);
 
         // lock the tokens
         amountTotalLocked = amountTotalLocked.add(_amountInitial);
 
-        NewGrant(_to, _amountInitial, _startTime, _endTime);
+        NewGrant(_to, _amountInitial, _startTime, _cliffTime, _endTime);
     }
 
     /**
@@ -87,12 +92,15 @@ contract VestingERC20 is Ownable{
     function revokeVesting(address _to) 
         public
         onlyOwner
+        whenNotPaused
     {
+        require(_to != 0);
+
         // send token available
         sendTokenReleased(_to);
 
         // unlock the tokens reserved for this grant
-        amountTotalLocked = amountTotalLocked.add(grants[_to].amountInitial.sub(grants[_to].amountWithdraw));
+        amountTotalLocked = amountTotalLocked.sub(grants[_to].amountInitial.sub(grants[_to].amountWithdraw));
 
         // delete the grants
         delete grants[_to];
@@ -108,9 +116,16 @@ contract VestingERC20 is Ownable{
      */
     function withdraw() 
         public
+        whenNotPaused
     {
         // send token to the vester
         require(sendTokenReleased(msg.sender));
+
+        // delete grant if fully withdraw
+        if(grants[msg.sender].amountInitial == grants[msg.sender].amountWithdraw) 
+        {
+            delete grants[msg.sender];
+        }
     }
 
     /**
@@ -151,7 +166,7 @@ contract VestingERC20 is Ownable{
         constant
         returns(uint256)
     {
-        if(now < grants[_to].startTime)
+        if(now < grants[_to].cliffTime) 
         {
             // the grant didn't start 
             return 0;
