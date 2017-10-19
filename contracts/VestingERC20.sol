@@ -1,6 +1,6 @@
 pragma solidity ^0.4.11;
 
-import './base/token/StandardToken.sol';
+import './base/token/ERC20.sol';
 import './base/math/SafeMath.sol';
 import './base/lifecycle/Pausable.sol';
 
