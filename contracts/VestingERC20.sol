@@ -119,10 +119,10 @@ contract VestingERC20 is Pausable{
         whenNotPaused
     {
         // send token to the vester
-        require(sendTokenReleased(msg.sender));
+        sendTokenReleased(msg.sender);
 
         // delete grant if fully withdraw
-        if(grants[msg.sender].amountInitial == grants[msg.sender].amountWithdraw) 
+        if(grants[msg.sender].amountInitial == grants[msg.sender].amountWithdraw &&  grants[msg.sender].amountInitial != 0) 
         {
             delete grants[msg.sender];
         }
@@ -142,8 +142,6 @@ contract VestingERC20 is Pausable{
         returns(bool)
     {
         uint256 amountToSend = getTokenAmountReleased(_to).sub(grants[_to].amountWithdraw);
-
-        if(amountToSend == 0) return false;
 
         // update amountWithdraw
         grants[_to].amountWithdraw = grants[_to].amountWithdraw.add(amountToSend);

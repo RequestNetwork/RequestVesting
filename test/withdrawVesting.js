@@ -3,12 +3,37 @@
 var VestingERC20 = artifacts.require("./VestingERC20.sol");
 var TestToken = artifacts.require("./test/TestToken.sol");
 var BigNumber = require('bignumber.js');
+var SolidityCoder = require("web3/lib/solidity/coder.js");
 
 
 // Copy & Paste this
 Date.prototype.getUnixTime = function() { return this.getTime()/1000|0 };
 if(!Date.now) Date.now = function() { return new Date(); }
 Date.time = function() { return Date.now().getUnixTime(); }
+
+
+var getEventFromReceipt = function(log, abi) {
+	var event = null;
+
+	for (var i = 0; i < abi.length; i++) {
+	  var item = abi[i];
+	  if (item.type != "event") continue;
+	  var signature = item.name + "(" + item.inputs.map(function(input) {return input.type;}).join(",") + ")";
+	  var hash = web3.sha3(signature);
+	  if (hash == log.topics[0]) {
+	    event = item;
+	    break;
+	  }
+	}
+
+	if (event != null) {
+	  var inputs = event.inputs.map(function(input) {return input.type;});
+	  var data = SolidityCoder.decodeParams(inputs, log.data.replace("0x", ""));
+	  // Do something with the data. Depends on the log and what you're using the data for.
+	  return {name:event.name , data:data};
+	}
+	return null;
+}
 
 var expectThrow = async function(promise) {
   try {
@@ -67,7 +92,7 @@ contract('Withdraw Vesting', function(accounts) {
 		currentTimeStamp = web3.eth.getBlock(web3.eth.blockNumber).timestamp;
 
 	});
-
+/*
 	it("withdraw Vesting not finished", async function() {
 		// grantVesting by owner
 		var startTimeSolidity = currentTimeStamp - 25*dayInsecond;
@@ -125,7 +150,7 @@ contract('Withdraw Vesting', function(accounts) {
 
 		assert((await testToken.balanceOf.call(guy1)).equals(grantToGuy1), "guy1 balance is wrong");
 	});
-
+*/
 
 	it("withdraw Vesting impossible", async function() {
 		// grantVesting by owner
@@ -134,7 +159,14 @@ contract('Withdraw Vesting', function(accounts) {
 		var endTimeSolidity = startTimeSolidity + 1000*dayInsecond;
 
 		// withdraw from address without grant
-		await expectThrow(vestingERC20.withdraw({from: guy1}));
+		var r = await vestingERC20.withdraw({from: guy1});
+
+		var l = getEventFromReceipt(r.receipt.logs[0], testToken.abi);
+		assert.equal(l.name,"Transfer","Event Transfer is missing)");
+		assert.equal(r.receipt.logs[0].topics[1], vestingERC20.address.replace("0x", "0x000000000000000000000000"), "wrong args");
+		assert.equal(r.receipt.logs[0].topics[2], guy1.replace("0x", "0x000000000000000000000000"), "wrong args");
+		assert.equal(l.data[0],0,"wrong args");
+
 
 		// create the vesting to delete
 		await vestingERC20.grantVesting(guy1, 
@@ -145,7 +177,13 @@ contract('Withdraw Vesting', function(accounts) {
 										{from: admin});
 
 		// withdraw from address with empty token grant
-		await expectThrow(vestingERC20.withdraw({from: guy1}));
+		var r = await vestingERC20.withdraw({from: guy1});
+
+		var l = getEventFromReceipt(r.receipt.logs[0], testToken.abi);
+		assert.equal(l.name,"Transfer","Event Transfer is missing)");
+		assert.equal(r.receipt.logs[0].topics[1], vestingERC20.address.replace("0x", "0x000000000000000000000000"), "wrong args");
+		assert.equal(r.receipt.logs[0].topics[2], guy1.replace("0x", "0x000000000000000000000000"), "wrong args");
+		assert.equal(l.data[0],0,"wrong args");
 	});
 
 	var areAlmostEquals = function(a,b,precision) {
