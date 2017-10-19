@@ -92,7 +92,7 @@ contract('Withdraw Vesting', function(accounts) {
 		currentTimeStamp = web3.eth.getBlock(web3.eth.blockNumber).timestamp;
 
 	});
-/*
+
 	it("withdraw Vesting not finished", async function() {
 		// grantVesting by owner
 		var startTimeSolidity = currentTimeStamp - 25*dayInsecond;
@@ -150,7 +150,7 @@ contract('Withdraw Vesting', function(accounts) {
 
 		assert((await testToken.balanceOf.call(guy1)).equals(grantToGuy1), "guy1 balance is wrong");
 	});
-*/
+
 
 	it("withdraw Vesting impossible", async function() {
 		// grantVesting by owner
