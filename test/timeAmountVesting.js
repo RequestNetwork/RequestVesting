@@ -71,15 +71,15 @@ contract('Timing amount Vesting', function(accounts) {
 	it("check amount throug time", async function() {
 		// grantVesting by owner
 		var startTimeSolidity = currentTimeStamp;
-		var cliffTimeSolidity = startTimeSolidity + 200*dayInsecond;
-		var endTimeSolidity = currentTimeStamp + 1000*dayInsecond;
+		var cliffPeriod = 200*dayInsecond;
+		var grantPeriod = 1000*dayInsecond;
 
 
 		await vestingERC20.grantVesting(guy1, 
-																grantToGuy1,
-																startTimeSolidity,
-																cliffTimeSolidity,
-																endTimeSolidity);
+										grantToGuy1,
+										startTimeSolidity,
+										grantPeriod,
+										cliffPeriod);
 
 		var arrayTest = [[1,0],[5,0],[10,0],[50,0],[100,0],[199,0],[200,200],[500,500],[999,999],[1000,1000],[1001,1000]];;
 

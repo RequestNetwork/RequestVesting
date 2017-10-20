@@ -96,15 +96,15 @@ contract('Withdraw Vesting', function(accounts) {
 	it("withdraw Vesting not finished", async function() {
 		// grantVesting by owner
 		var startTimeSolidity = currentTimeStamp - 25*dayInsecond;
-		var cliffTimeSolidity = startTimeSolidity + 1*dayInsecond;
-		var endTimeSolidity = currentTimeStamp + 75*dayInsecond;
+		var cliffPeriod = 25*dayInsecond;
+		var grantPeriod = 100*dayInsecond;
 
 		// create the vesting to delete
 		await vestingERC20.grantVesting(guy1, 
 										grantToGuy1,
 										startTimeSolidity,
-										cliffTimeSolidity,
-										endTimeSolidity,
+										grantPeriod,
+										cliffPeriod,
 										{from: admin});
 
 		await vestingERC20.withdraw({from: guy1});
@@ -115,8 +115,8 @@ contract('Withdraw Vesting', function(accounts) {
 		var grantsGuy1 = await vestingERC20.grants.call(guy1);
 		assert(grantsGuy1[0].equals(grantToGuy1), "amountInitial is wrong");
 		assert.equal(grantsGuy1[1], startTimeSolidity, "startTime is wrong");
-		assert.equal(grantsGuy1[2], cliffTimeSolidity, "clifTime is wrong");
-		assert.equal(grantsGuy1[3], endTimeSolidity, "endtime is wrong");
+		assert.equal(grantsGuy1[2], startTimeSolidity+cliffPeriod, "clifTime is wrong");
+		assert.equal(grantsGuy1[3], startTimeSolidity+grantPeriod, "endtime is wrong");
 		assert(areAlmostEquals(grantsGuy1[4],grantToGuy1.div(4)), "AmountWithdraw is wrong");
 
 		assert(areAlmostEquals(await testToken.balanceOf.call(guy1),grantToGuy1.div(4)), "guy1 balance is wrong");
@@ -125,15 +125,15 @@ contract('Withdraw Vesting', function(accounts) {
 	it("withdraw Vesting finished", async function() {
 		// grantVesting by owner
 		var startTimeSolidity = currentTimeStamp - 100*dayInsecond;
-		var cliffTimeSolidity = startTimeSolidity + 1*dayInsecond;
-		var endTimeSolidity = currentTimeStamp - 1*dayInsecond;
+		var cliffPeriod = 1*dayInsecond;
+		var grantPeriod = 100*dayInsecond;
 
 		// create the vesting to delete
 		await vestingERC20.grantVesting(guy1, 
 										grantToGuy1,
 										startTimeSolidity,
-										cliffTimeSolidity,
-										endTimeSolidity,
+										grantPeriod,
+										cliffPeriod,
 										{from: admin});
 
 		await vestingERC20.withdraw({from: guy1});
@@ -155,8 +155,8 @@ contract('Withdraw Vesting', function(accounts) {
 	it("withdraw Vesting impossible", async function() {
 		// grantVesting by owner
 		var startTimeSolidity = currentTimeStamp;
-		var cliffTimeSolidity = startTimeSolidity + 100*dayInsecond;
-		var endTimeSolidity = startTimeSolidity + 1000*dayInsecond;
+		var cliffPeriod = 100*dayInsecond;
+		var grantPeriod = 1000*dayInsecond;
 
 		// withdraw from address without grant
 		var r = await vestingERC20.withdraw({from: guy1});
@@ -172,8 +172,8 @@ contract('Withdraw Vesting', function(accounts) {
 		await vestingERC20.grantVesting(guy1, 
 										grantToGuy1,
 										startTimeSolidity,
-										cliffTimeSolidity,
-										endTimeSolidity,
+										grantPeriod,
+										cliffPeriod,
 										{from: admin});
 
 		// withdraw from address with empty token grant

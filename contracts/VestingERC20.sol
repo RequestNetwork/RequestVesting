@@ -2,6 +2,7 @@ pragma solidity ^0.4.11;
 
 import './base/token/ERC20.sol';
 import './base/math/SafeMath.sol';
+import './base/math/SafeMath64.sol';
 import './base/lifecycle/Pausable.sol';
 
 /**
@@ -12,7 +13,7 @@ import './base/lifecycle/Pausable.sol';
  */
 contract VestingERC20 is Pausable{
     using SafeMath for uint256;
-    using SafeMath for uint64;
+    using SafeMath64 for uint64;
 
     // The token being vested
     ERC20 public token;
@@ -49,22 +50,21 @@ contract VestingERC20 is Pausable{
      * @param _to The address where the token will be sent.
      * @param _amountInitial The amount of tokens to be sent during the vesting period.
      * @param _startTime The time when the vesting starts.
-     * @param _endTime The time when the vesting ends.
+     * @param _grantPeriod The period of the grant in sec.
+     * @param _cliffPeriod The period in sec during which time the tokens cannot be withraw
      */
     function grantVesting(
             address _to,   
             uint256 _amountInitial,
             uint64 _startTime,
-            uint64 _cliffTime,
-            uint64 _endTime) 
+            uint64 _grantPeriod,
+            uint64 _cliffPeriod) 
         public
         onlyOwner
         whenNotPaused
     {
         require(_to != 0);
-        require(_startTime < _endTime);
-        require(_cliffTime <= _endTime);
-        require(_startTime <= _cliffTime);
+        require(_cliffPeriod <= _grantPeriod);
         require(_amountInitial != 0);
 
         // sender does not hava a grant yet
@@ -73,12 +73,15 @@ contract VestingERC20 is Pausable{
         // check if there is enough token not locked
         require(amountTotalLocked.add(_amountInitial) <= getTokenOnContract());
 
-        grants[_to] = Grant(_amountInitial, _startTime, _cliffTime, _endTime, 0);
+        var cliffTime = _startTime.add(_cliffPeriod);
+        var endTime = _startTime.add(_grantPeriod);
+
+        grants[_to] = Grant(_amountInitial, _startTime, cliffTime, endTime, 0);
 
         // lock the tokens
         amountTotalLocked = amountTotalLocked.add(_amountInitial);
 
-        NewGrant(_to, _amountInitial, _startTime, _cliffTime, _endTime);
+        NewGrant(_to, _amountInitial, _startTime, cliffTime, endTime);
     }
 
     /**

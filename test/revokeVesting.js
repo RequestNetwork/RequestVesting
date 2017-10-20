@@ -71,16 +71,16 @@ contract('Revoke Vesting', function(accounts) {
 	it("Revoking Vesting before cliff", async function() {
 		// grantVesting by owner
 		var startTimeSolidity = currentTimeStamp;
-		var cliffTimeSolidity = startTimeSolidity + 100*dayInsecond;
-		var endTimeSolidity = startTimeSolidity + 1000*dayInsecond;
+		var cliffPeriod = 100*dayInsecond;
+		var grantPeriod = 1000*dayInsecond;
 
 
 		// create the vesting to delete
 		var r = await vestingERC20.grantVesting(guy1, 
 												grantToGuy1,
 												startTimeSolidity,
-												cliffTimeSolidity,
-												endTimeSolidity,
+												grantPeriod,
+												cliffPeriod,
 												{from: admin});
 
 		// revokeVesting by owner
@@ -108,16 +108,16 @@ contract('Revoke Vesting', function(accounts) {
 	it("Revoking Vesting before grant starting", async function() {
 		// grantVesting by owner
 		var startTimeSolidity = currentTimeStamp + 100*dayInsecond;;
-		var cliffTimeSolidity = startTimeSolidity + 100*dayInsecond;
-		var endTimeSolidity = startTimeSolidity + 1000*dayInsecond;
+		var cliffPeriod = 100*dayInsecond;
+		var grantPeriod = 1000*dayInsecond;
 
 		// create the vesting to delete
 		var r = await vestingERC20.grantVesting(guy1, 
-														grantToGuy1,
-														startTimeSolidity,
-														cliffTimeSolidity,
-														endTimeSolidity,
-														{from: admin});
+												grantToGuy1,
+												startTimeSolidity,
+												grantPeriod,
+												cliffPeriod,
+												{from: admin});
 
 		// revokeVesting by owner
 		var r = await vestingERC20.revokeVesting(guy1, {from: admin});
@@ -142,16 +142,16 @@ contract('Revoke Vesting', function(accounts) {
 	it("Revoking Vesting after cliff", async function() {
 		// grantVesting by owner
 		var startTimeSolidity = currentTimeStamp - 100*dayInsecond;;
-		var cliffTimeSolidity = currentTimeStamp - 10*dayInsecond;
-		var endTimeSolidity = startTimeSolidity + 1000*dayInsecond;
+		var cliffPeriod = 10*dayInsecond;
+		var grantPeriod = 1000*dayInsecond;
 
 
 		// create the vesting to delete
 		var r = await vestingERC20.grantVesting(guy1, 
 												grantToGuy1,
 												startTimeSolidity,
-												cliffTimeSolidity,
-												endTimeSolidity,
+												grantPeriod,
+												cliffPeriod,
 												{from: admin});
 
 		// revokeVesting by owner
@@ -178,16 +178,16 @@ contract('Revoke Vesting', function(accounts) {
 	it("Revoking Vesting after finish", async function() {
 		// grantVesting by owner
 		var startTimeSolidity = currentTimeStamp - 100*dayInsecond;;
-		var cliffTimeSolidity = currentTimeStamp - 90*dayInsecond;
-		var endTimeSolidity = startTimeSolidity + 99*dayInsecond;
+		var cliffPeriod = 10*dayInsecond;
+		var grantPeriod = 99*dayInsecond;
 
 		// create the vesting to delete
 		var r = await vestingERC20.grantVesting(guy1, 
-														grantToGuy1,
-														startTimeSolidity,
-														cliffTimeSolidity,
-														endTimeSolidity,
-														{from: admin});
+												grantToGuy1,
+												startTimeSolidity,
+												grantPeriod,
+												cliffPeriod,
+												{from: admin});
 
 		// revokeVesting by owner
 		var r = await vestingERC20.revokeVesting(guy1, {from: admin});
@@ -213,17 +213,17 @@ contract('Revoke Vesting', function(accounts) {
 	it("Revoking Vesting after withdraw", async function() {
 		// grantVesting by owner
 		var startTimeSolidity = currentTimeStamp - 100*dayInsecond;;
-		var cliffTimeSolidity = currentTimeStamp - 10*dayInsecond;
-		var endTimeSolidity = startTimeSolidity + 101*dayInsecond;
+		var cliffPeriod = 90*dayInsecond;
+		var grantPeriod = 101*dayInsecond;
 
 
 		// create the vesting to delete
 		var r = await vestingERC20.grantVesting(guy1, 
-														grantToGuy1,
-														startTimeSolidity,
-														cliffTimeSolidity,
-														endTimeSolidity,
-														{from: admin});
+											grantToGuy1,
+											startTimeSolidity,
+											grantPeriod,
+											cliffPeriod,
+											{from: admin});
 
 
 		var r = await vestingERC20.withdraw({from: guy1});
@@ -251,19 +251,19 @@ contract('Revoke Vesting', function(accounts) {
 	it("Revoking Vesting impossible", async function() {
 		// grantVesting by owner
 		var startTimeSolidity = currentTimeStamp;
-		var cliffTimeSolidity = startTimeSolidity + 100*dayInsecond;
-		var endTimeSolidity = startTimeSolidity + 1000*dayInsecond;
+		var cliffPeriod = 100*dayInsecond;
+		var grantPeriod = 1000*dayInsecond;
 
 		// revokeVesting to someone with no grant
 		await expectThrow(vestingERC20.revokeVesting(guy1, {from: guy1}));
 
 		// create the vesting to delete
 		var r = await vestingERC20.grantVesting(guy1, 
-														grantToGuy1,
-														startTimeSolidity,
-														cliffTimeSolidity,
-														endTimeSolidity,
-														{from: admin});
+												grantToGuy1,
+												startTimeSolidity,
+												grantPeriod,
+												cliffPeriod,
+												{from: admin});
 
 		// revokeVesting by guy1 to guy1
 		await expectThrow(vestingERC20.revokeVesting(guy1, {from: guy1}));

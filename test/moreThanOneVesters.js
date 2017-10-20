@@ -78,14 +78,14 @@ contract('Grant Vesting vesters', function(accounts) {
 	it("Grant Vesting to three vesters", async function() {
 		// grantVesting by owner
 		var startTimeSolidity = currentTimeStamp;
-		var cliffTimeSolidity = startTimeSolidity + 100*dayInsecond;
-		var endTimeSolidity = startTimeSolidity + 1000*dayInsecond;
+		var cliffPeriod = 100*dayInsecond;
+		var grantPeriod = 1000*dayInsecond;
 
 		var r = await vestingERC20.grantVesting(guy1, 
 											grantToGuy1,    
 								            startTimeSolidity,
-								            cliffTimeSolidity,
-								            endTimeSolidity,
+								            grantPeriod,
+								            cliffPeriod,
 								            {from: admin});
 
 		// event NewGrant(to, amountInitial, startTime, cliffTime, endTime)
@@ -93,16 +93,16 @@ contract('Grant Vesting vesters', function(accounts) {
 		assert.equal(r.logs[0].args.to, guy1, "to is wrong");
 		assert(r.logs[0].args.amountInitial.equals(grantToGuy1), "amountInitial is wrong");
 		assert.equal(r.logs[0].args.startTime, startTimeSolidity, "startTime is wrong");
-		assert.equal(r.logs[0].args.cliffTime, cliffTimeSolidity, "cliffTime is wrong");
-		assert.equal(r.logs[0].args.endTime, endTimeSolidity, "endTime is wrong");
+		assert.equal(r.logs[0].args.cliffTime, startTimeSolidity+cliffPeriod, "cliffTime is wrong");
+		assert.equal(r.logs[0].args.endTime, startTimeSolidity+grantPeriod, "endTime is wrong");
 
 		assert(grantToGuy1.equals(await vestingERC20.amountTotalLocked.call()), "amountTotalLocked is wrong");
 
 		var grantsGuy1 = await vestingERC20.grants.call(guy1);
 		assert(grantsGuy1[0].equals(grantToGuy1), "amountInitial is wrong");
 		assert.equal(grantsGuy1[1], startTimeSolidity, "startTime is wrong");
-		assert.equal(grantsGuy1[2], cliffTimeSolidity, "clifTime is wrong");
-		assert.equal(grantsGuy1[3], endTimeSolidity, "endtime is wrong");
+		assert.equal(grantsGuy1[2], startTimeSolidity+cliffPeriod, "clifTime is wrong");
+		assert.equal(grantsGuy1[3], startTimeSolidity+grantPeriod, "endtime is wrong");
 		assert.equal(grantsGuy1[4], 0, "AmountWithdraw is wrong");
 
 
@@ -110,8 +110,8 @@ contract('Grant Vesting vesters', function(accounts) {
 		var r = await vestingERC20.grantVesting(guy2, 
 											grantToGuy2,    
 								            startTimeSolidity,
-								            cliffTimeSolidity,
-								            endTimeSolidity,
+								            grantPeriod,
+								            cliffPeriod,
 								            {from: admin});
 
 		// event NewGrant(to, amountInitial, startTime, cliffTime, endTime)
@@ -119,23 +119,23 @@ contract('Grant Vesting vesters', function(accounts) {
 		assert.equal(r.logs[0].args.to, guy2, "to is wrong");
 		assert(r.logs[0].args.amountInitial.equals(grantToGuy2), "amountInitial is wrong");
 		assert.equal(r.logs[0].args.startTime, startTimeSolidity, "startTime is wrong");
-		assert.equal(r.logs[0].args.cliffTime, cliffTimeSolidity, "cliffTime is wrong");
-		assert.equal(r.logs[0].args.endTime, endTimeSolidity, "endTime is wrong");
+		assert.equal(r.logs[0].args.cliffTime, startTimeSolidity+cliffPeriod, "cliffTime is wrong");
+		assert.equal(r.logs[0].args.endTime, startTimeSolidity+grantPeriod, "endTime is wrong");
 
 		assert(grantToGuy1.add(grantToGuy2).equals(await vestingERC20.amountTotalLocked.call()), "amountTotalLocked is wrong");
 
 		var grantsGuy1 = await vestingERC20.grants.call(guy2);
 		assert(grantsGuy1[0].equals(grantToGuy2), "amountInitial is wrong");
 		assert.equal(grantsGuy1[1], startTimeSolidity, "startTime is wrong");
-		assert.equal(grantsGuy1[2], cliffTimeSolidity, "clifTime is wrong");
-		assert.equal(grantsGuy1[3], endTimeSolidity, "endtime is wrong");
+		assert.equal(grantsGuy1[2], startTimeSolidity+cliffPeriod, "clifTime is wrong");
+		assert.equal(grantsGuy1[3], startTimeSolidity+grantPeriod, "endtime is wrong");
 		assert.equal(grantsGuy1[4], 0, "AmountWithdraw is wrong");
 
 		var r = await vestingERC20.grantVesting(guy3, 
 											grantToGuy3,    
 								            startTimeSolidity,
-								            cliffTimeSolidity,
-								            endTimeSolidity,
+								            grantPeriod,
+								            cliffPeriod,
 								            {from: admin});
 
 		// event NewGrant(to, amountInitial, startTime, cliffTime, endTime)
@@ -143,16 +143,16 @@ contract('Grant Vesting vesters', function(accounts) {
 		assert.equal(r.logs[0].args.to, guy3, "to is wrong");
 		assert(r.logs[0].args.amountInitial.equals(grantToGuy3), "amountInitial is wrong");
 		assert.equal(r.logs[0].args.startTime, startTimeSolidity, "startTime is wrong");
-		assert.equal(r.logs[0].args.cliffTime, cliffTimeSolidity, "cliffTime is wrong");
-		assert.equal(r.logs[0].args.endTime, endTimeSolidity, "endTime is wrong");
+		assert.equal(r.logs[0].args.cliffTime, startTimeSolidity+cliffPeriod, "cliffTime is wrong");
+		assert.equal(r.logs[0].args.endTime, startTimeSolidity+grantPeriod, "endTime is wrong");
 
 		assert(grantToGuy1.add(grantToGuy2).add(grantToGuy3).equals(await vestingERC20.amountTotalLocked.call()), "amountTotalLocked is wrong");
 
 		var grantsGuy1 = await vestingERC20.grants.call(guy3);
 		assert(grantsGuy1[0].equals(grantToGuy3), "amountInitial is wrong");
 		assert.equal(grantsGuy1[1], startTimeSolidity, "startTime is wrong");
-		assert.equal(grantsGuy1[2], cliffTimeSolidity, "clifTime is wrong");
-		assert.equal(grantsGuy1[3], endTimeSolidity, "endtime is wrong");
+		assert.equal(grantsGuy1[2], startTimeSolidity+cliffPeriod, "clifTime is wrong");
+		assert.equal(grantsGuy1[3], startTimeSolidity+grantPeriod, "endtime is wrong");
 		assert.equal(grantsGuy1[4], 0, "AmountWithdraw is wrong");
 	});
 
