@@ -29,6 +29,7 @@ contract VestingERC20 is Pausable{
 	// Ledger of the tokens hodled in this contract (token => from => balance)
 	mapping(address => mapping(address => uint256)) public tokens;
 
+
 	event NewGrant(address from, address to, address token, uint256 amountInitial, uint64 startTime, uint64 cliffTime, uint64 endTime);
 	event GrantRevoked(address from, address to, address token);
     event Deposit(address token, address from, uint amount, uint balance);
@@ -48,8 +49,8 @@ contract VestingERC20 is Pausable{
 	 * @param _cliffPeriod The period in sec during which time the tokens cannot be withraw
 	 */
 	function grantVesting(
-			address _to,  
 			address _token, 
+			address _to,  
 			uint256 _amountInitial,
 			uint64 _startTime,
 			uint64 _grantPeriod,
@@ -84,7 +85,7 @@ contract VestingERC20 is Pausable{
 	 * @param _to The address of the vester.
 	 * @param _token The address of the token.
 	 */
-	function revokeVesting(address _to, address _token) 
+	function revokeVesting(address _token, address _to) 
 		public
 		whenNotPaused
 	{
