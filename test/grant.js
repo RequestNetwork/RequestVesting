@@ -27,7 +27,7 @@ var expectThrow = async function(promise) {
 };
 
 
-contract('Deposit', function(accounts) {
+contract('Grant', function(accounts) {
 	// account setting ----------------------------------------------------------------------
 	var admin = accounts[0];
 	var spender1 = accounts[1];
