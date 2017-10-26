@@ -90,9 +90,14 @@ contract VestingERC20 is Pausable{
 		public
 		whenNotPaused
 	{
+		require(_token != 0);
+		require(_to != 0);
 		require(_to != 0);
 
 		Grant storage _grant = grants[_token][msg.sender][_to];
+
+		// the grant exists
+		require(_grant.amountInitial!=0);
 
 		// send token available
 		sendTokenReleased(_token, msg.sender, _to);
