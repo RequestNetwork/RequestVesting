@@ -58,6 +58,7 @@ contract VestingERC20 is Pausable{
 		public
 		whenNotPaused
 	{
+		require(_token != 0);
 		require(_to != 0);
 		require(_cliffPeriod <= _grantPeriod);
 		require(_amountInitial != 0);
