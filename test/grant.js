@@ -78,14 +78,15 @@ contract('Deposit', function(accounts) {
 		// deposit spender1
 		await testToken.approve(vestingERC20.address, spender1Supply, {from: spender1});
 		var r = await vestingERC20.deposit(testToken.address, spender1Supply, {from: spender1});
+		await testToken2.approve(vestingERC20.address, spender1Supply, {from: spender1});
+		var r = await vestingERC20.deposit(testToken2.address, spender1Supply, {from: spender1});
 
 		// deposit spender2
 		await testToken.approve(vestingERC20.address, spender2Supply, {from: spender2});
 		var r = await vestingERC20.deposit(testToken.address, spender2Supply, {from: spender2});	
 	});
 
-	it("Grant Vesting", async function() {
-		// grantVesting by owner
+	it("simple grant", async function() {
 		var grantSpender1toVester1 = (new BigNumber(10).pow(decimals)).mul(1000);
 		var startTimeSolidity = currentTimeStamp;
 		var cliffPeriodS1V1 = 200*dayInsecond;
@@ -226,6 +227,175 @@ contract('Deposit', function(accounts) {
 						            grantPeriod,
 						            cliffPeriod,
 						            {from: spender2}));
+	});
+
+
+	it("grant vesting with same token and same from to different vesters", async function() {
+		var grantSpender1toVester1 = (new BigNumber(10).pow(decimals)).mul(1000);
+		var grantSpender1toVester2 = (new BigNumber(10).pow(decimals)).mul(5000);
+
+		var startTimeSolidity = currentTimeStamp;
+		var cliffPeriodS1V1 = 200*dayInsecond;
+		var grantPeriodS1V1 = 1000*dayInsecond;
+
+		// create the grant vester1
+		var r = await vestingERC20.grantVesting(testToken.address, vester1, grantSpender1toVester1, 
+											startTimeSolidity, grantPeriodS1V1, cliffPeriodS1V1,
+											 {from: spender1});
+
+		assert.equal(r.logs[0].event, 'NewGrant', "event is wrong");
+		assert.equal(r.logs[0].args.token, testToken.address, "token is wrong");
+		assert(r.logs[0].args.amountInitial.equals(grantSpender1toVester1), "amountInitial is wrong");
+		assert.equal(r.logs[0].args.from, spender1, "from is wrong");
+		assert.equal(r.logs[0].args.to, vester1, "to is wrong");
+		assert(r.logs[0].args.startTime.equals(startTimeSolidity), "startTime is wrong");
+		assert(r.logs[0].args.cliffTime.equals(startTimeSolidity+cliffPeriodS1V1), "cliffTime is wrong");
+		assert(r.logs[0].args.endTime.equals(startTimeSolidity+grantPeriodS1V1), "endTime is wrong");
+
+		assert((await vestingERC20.tokens.call(testToken.address, spender1)).equals(spender1Supply.minus(grantSpender1toVester1)), "spender1SupplyOnContract is wrong");
+
+		var grantsS1toV1 = await vestingERC20.grants.call(testToken.address, spender1, vester1);
+		assert(grantsS1toV1[0].equals(grantSpender1toVester1), "amountInitial is wrong");
+		assert.equal(grantsS1toV1[1], startTimeSolidity, "startTime is wrong");
+		assert.equal(grantsS1toV1[2], startTimeSolidity+cliffPeriodS1V1, "cliffTime is wrong");
+		assert.equal(grantsS1toV1[3], startTimeSolidity+grantPeriodS1V1, "endtime is wrong");
+		assert.equal(grantsS1toV1[4], 0, "amountWithdraw is wrong");
+
+		// create the grant vester2
+		var r = await vestingERC20.grantVesting(testToken.address, vester2, grantSpender1toVester2, 
+											startTimeSolidity, grantPeriodS1V1, cliffPeriodS1V1,
+											 {from: spender1});
+
+		assert.equal(r.logs[0].event, 'NewGrant', "event is wrong");
+		assert.equal(r.logs[0].args.token, testToken.address, "token is wrong");
+		assert(r.logs[0].args.amountInitial.equals(grantSpender1toVester2), "amountInitial is wrong");
+		assert.equal(r.logs[0].args.from, spender1, "from is wrong");
+		assert.equal(r.logs[0].args.to, vester2, "to is wrong");
+		assert(r.logs[0].args.startTime.equals(startTimeSolidity), "startTime is wrong");
+		assert(r.logs[0].args.cliffTime.equals(startTimeSolidity+cliffPeriodS1V1), "cliffTime is wrong");
+		assert(r.logs[0].args.endTime.equals(startTimeSolidity+grantPeriodS1V1), "endTime is wrong");
+
+		assert((await vestingERC20.tokens.call(testToken.address, spender1)).equals(spender1Supply.minus(grantSpender1toVester1).minus(grantSpender1toVester2)), "spender1SupplyOnContract is wrong");
+
+		var grantsS1toV1 = await vestingERC20.grants.call(testToken.address, spender1, vester2);
+		assert(grantsS1toV1[0].equals(grantSpender1toVester2), "amountInitial is wrong");
+		assert.equal(grantsS1toV1[1], startTimeSolidity, "startTime is wrong");
+		assert.equal(grantsS1toV1[2], startTimeSolidity+cliffPeriodS1V1, "cliffTime is wrong");
+		assert.equal(grantsS1toV1[3], startTimeSolidity+grantPeriodS1V1, "endtime is wrong");
+		assert.equal(grantsS1toV1[4], 0, "amountWithdraw is wrong");
+
+	});
+
+	it("grant vesting to the same vester but different token", async function() {
+		var grantSpender1toVester1 = (new BigNumber(10).pow(decimals)).mul(1000);
+		var grantSpender1toVester1Token2 = (new BigNumber(10).pow(decimals)).mul(5000);
+
+		var startTimeSolidity = currentTimeStamp;
+		var cliffPeriodS1V1 = 200*dayInsecond;
+		var grantPeriodS1V1 = 1000*dayInsecond;
+
+		// create the grant token 1
+		var r = await vestingERC20.grantVesting(testToken.address, vester1, grantSpender1toVester1, 
+											startTimeSolidity, grantPeriodS1V1, cliffPeriodS1V1,
+											 {from: spender1});
+
+		assert.equal(r.logs[0].event, 'NewGrant', "event is wrong");
+		assert.equal(r.logs[0].args.token, testToken.address, "token is wrong");
+		assert(r.logs[0].args.amountInitial.equals(grantSpender1toVester1), "amountInitial is wrong");
+		assert.equal(r.logs[0].args.from, spender1, "from is wrong");
+		assert.equal(r.logs[0].args.to, vester1, "to is wrong");
+		assert(r.logs[0].args.startTime.equals(startTimeSolidity), "startTime is wrong");
+		assert(r.logs[0].args.cliffTime.equals(startTimeSolidity+cliffPeriodS1V1), "cliffTime is wrong");
+		assert(r.logs[0].args.endTime.equals(startTimeSolidity+grantPeriodS1V1), "endTime is wrong");
+
+		assert((await vestingERC20.tokens.call(testToken.address, spender1)).equals(spender1Supply.minus(grantSpender1toVester1)), "spender1SupplyOnContract is wrong");
+
+		var grantsS1toV1 = await vestingERC20.grants.call(testToken.address, spender1, vester1);
+		assert(grantsS1toV1[0].equals(grantSpender1toVester1), "amountInitial is wrong");
+		assert.equal(grantsS1toV1[1], startTimeSolidity, "startTime is wrong");
+		assert.equal(grantsS1toV1[2], startTimeSolidity+cliffPeriodS1V1, "cliffTime is wrong");
+		assert.equal(grantsS1toV1[3], startTimeSolidity+grantPeriodS1V1, "endtime is wrong");
+		assert.equal(grantsS1toV1[4], 0, "amountWithdraw is wrong");
+
+		// create the grant token 2
+		var r = await vestingERC20.grantVesting(testToken2.address, vester1, grantSpender1toVester1Token2, 
+											startTimeSolidity, grantPeriodS1V1, cliffPeriodS1V1,
+											 {from: spender1});
+
+		assert.equal(r.logs[0].event, 'NewGrant', "event is wrong");
+		assert.equal(r.logs[0].args.token, testToken2.address, "token is wrong");
+		assert(r.logs[0].args.amountInitial.equals(grantSpender1toVester1Token2), "amountInitial is wrong");
+		assert.equal(r.logs[0].args.from, spender1, "from is wrong");
+		assert.equal(r.logs[0].args.to, vester1, "to is wrong");
+		assert(r.logs[0].args.startTime.equals(startTimeSolidity), "startTime is wrong");
+		assert(r.logs[0].args.cliffTime.equals(startTimeSolidity+cliffPeriodS1V1), "cliffTime is wrong");
+		assert(r.logs[0].args.endTime.equals(startTimeSolidity+grantPeriodS1V1), "endTime is wrong");
+
+		assert((await vestingERC20.tokens.call(testToken2.address, spender1)).equals(spender1Supply.minus(grantSpender1toVester1Token2)), "spender1SupplyOnContract is wrong");
+
+		var grantsS1toV1 = await vestingERC20.grants.call(testToken2.address, spender1, vester1);
+		assert(grantsS1toV1[0].equals(grantSpender1toVester1Token2), "amountInitial is wrong");
+		assert.equal(grantsS1toV1[1], startTimeSolidity, "startTime is wrong");
+		assert.equal(grantsS1toV1[2], startTimeSolidity+cliffPeriodS1V1, "cliffTime is wrong");
+		assert.equal(grantsS1toV1[3], startTimeSolidity+grantPeriodS1V1, "endtime is wrong");
+		assert.equal(grantsS1toV1[4], 0, "amountWithdraw is wrong");
+
+	});
+
+	it("grant vesting to someone with a vesting same token but from other spender", async function() {
+		var grantSpender1toVester1 = (new BigNumber(10).pow(decimals)).mul(1000);
+		var grantSpender1toVester1fromSpender2 = (new BigNumber(10).pow(decimals)).mul(5000);
+
+		var startTimeSolidity = currentTimeStamp;
+		var cliffPeriodS1V1 = 200*dayInsecond;
+		var grantPeriodS1V1 = 1000*dayInsecond;
+
+		// create the grant token 1
+		var r = await vestingERC20.grantVesting(testToken.address, vester1, grantSpender1toVester1, 
+											startTimeSolidity, grantPeriodS1V1, cliffPeriodS1V1,
+											 {from: spender1});
+
+		assert.equal(r.logs[0].event, 'NewGrant', "event is wrong");
+		assert.equal(r.logs[0].args.token, testToken.address, "token is wrong");
+		assert(r.logs[0].args.amountInitial.equals(grantSpender1toVester1), "amountInitial is wrong");
+		assert.equal(r.logs[0].args.from, spender1, "from is wrong");
+		assert.equal(r.logs[0].args.to, vester1, "to is wrong");
+		assert(r.logs[0].args.startTime.equals(startTimeSolidity), "startTime is wrong");
+		assert(r.logs[0].args.cliffTime.equals(startTimeSolidity+cliffPeriodS1V1), "cliffTime is wrong");
+		assert(r.logs[0].args.endTime.equals(startTimeSolidity+grantPeriodS1V1), "endTime is wrong");
+
+		assert((await vestingERC20.tokens.call(testToken.address, spender1)).equals(spender1Supply.minus(grantSpender1toVester1)), "spender1SupplyOnContract is wrong");
+
+		var grantsS1toV1 = await vestingERC20.grants.call(testToken.address, spender1, vester1);
+		assert(grantsS1toV1[0].equals(grantSpender1toVester1), "amountInitial is wrong");
+		assert.equal(grantsS1toV1[1], startTimeSolidity, "startTime is wrong");
+		assert.equal(grantsS1toV1[2], startTimeSolidity+cliffPeriodS1V1, "cliffTime is wrong");
+		assert.equal(grantsS1toV1[3], startTimeSolidity+grantPeriodS1V1, "endtime is wrong");
+		assert.equal(grantsS1toV1[4], 0, "amountWithdraw is wrong");
+
+		// create the grant token 2
+		var r = await vestingERC20.grantVesting(testToken.address, vester1, grantSpender1toVester1fromSpender2, 
+											startTimeSolidity, grantPeriodS1V1, cliffPeriodS1V1,
+											 {from: spender2});
+
+		assert.equal(r.logs[0].event, 'NewGrant', "event is wrong");
+		assert.equal(r.logs[0].args.token, testToken.address, "token is wrong");
+		assert(r.logs[0].args.amountInitial.equals(grantSpender1toVester1fromSpender2), "amountInitial is wrong");
+		assert.equal(r.logs[0].args.from, spender2, "from is wrong");
+		assert.equal(r.logs[0].args.to, vester1, "to is wrong");
+		assert(r.logs[0].args.startTime.equals(startTimeSolidity), "startTime is wrong");
+		assert(r.logs[0].args.cliffTime.equals(startTimeSolidity+cliffPeriodS1V1), "cliffTime is wrong");
+		assert(r.logs[0].args.endTime.equals(startTimeSolidity+grantPeriodS1V1), "endTime is wrong");
+
+		assert((await vestingERC20.tokens.call(testToken.address, spender2)).equals(spender2Supply.minus(grantSpender1toVester1fromSpender2)), "spender1SupplyOnContract is wrong");
+
+		var grantsS1toV1 = await vestingERC20.grants.call(testToken.address, spender2, vester1);
+		assert(grantsS1toV1[0].equals(grantSpender1toVester1fromSpender2), "amountInitial is wrong");
+		assert.equal(grantsS1toV1[1], startTimeSolidity, "startTime is wrong");
+		assert.equal(grantsS1toV1[2], startTimeSolidity+cliffPeriodS1V1, "cliffTime is wrong");
+		assert.equal(grantsS1toV1[3], startTimeSolidity+grantPeriodS1V1, "endtime is wrong");
+		assert.equal(grantsS1toV1[4], 0, "amountWithdraw is wrong");
+
 	});
 
 
