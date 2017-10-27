@@ -1,5 +1,3 @@
-// return;
-
 var VestingERC20 = artifacts.require("./VestingERC20.sol");
 var TestToken = artifacts.require("./test/TestToken.sol");
 var BigNumber = require('bignumber.js');
