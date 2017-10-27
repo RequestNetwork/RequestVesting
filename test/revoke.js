@@ -1,5 +1,3 @@
-// return;
-
 var VestingERC20 = artifacts.require("./VestingERC20.sol");
 var TestToken = artifacts.require("./test/TestToken.sol");
 var BigNumber = require('bignumber.js');
@@ -305,7 +303,8 @@ contract('Revoke', function(accounts) {
 		assert.equal(r.logs[0].args.from, spender1, "from is wrong");
 		assert.equal(r.logs[0].args.to, vester1, "to is wrong");
 		assert.equal(r.logs[0].args.token, testToken.address, "token is wrong");
-		assert(areAlmostEquals(r.logs[0].args.amount, 0), "amount is wrong");
+		// almost zero to withdraw
+		assert(areAlmostEquals(r.logs[0].args.amount.add(grantSpender1toVester1), grantSpender1toVester1), "amount is wrong");
 
 		// event GrantRevoked(from, to, token)
 		assert.equal(r.logs[1].event, 'GrantRevoked', "event is wrong");
