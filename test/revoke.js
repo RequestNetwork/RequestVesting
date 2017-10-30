@@ -112,14 +112,14 @@ contract('Revoke', function(accounts) {
 		assert.equal(r.logs[1].args.to, vester1, "to is wrong");
 		assert.equal(r.logs[1].args.token, testToken.address, "token is wrong");
 
-		assert((await vestingERC20.tokens.call(testToken.address, spender1)).equals(spender1Supply), "spender1SupplyOnContract is wrong");
+		assert((await vestingERC20.balanceDepositPerPersonPerToken.call(testToken.address, spender1)).equals(spender1Supply), "spender1SupplyOnContract is wrong");
 
-		var grantsS1toV1 = await vestingERC20.grants.call(testToken.address, spender1, vester1);
-		assert(grantsS1toV1[0].equals(0), "amountInitial is wrong");
+		var grantsS1toV1 = await vestingERC20.grantsPerVesterPerSpenderPerToken.call(testToken.address, spender1, vester1);
+		assert(grantsS1toV1[0].equals(0), "vestedAmount is wrong");
 		assert.equal(grantsS1toV1[1], 0, "startTime is wrong");
 		assert.equal(grantsS1toV1[2], 0, "cliffTime is wrong");
 		assert.equal(grantsS1toV1[3], 0, "endtime is wrong");
-		assert.equal(grantsS1toV1[4], 0, "amountWithdraw is wrong");
+		assert.equal(grantsS1toV1[4], 0, "withdrawnAmount is wrong");
 
 		// revoke grant before cliff -> nothing to withdrawl during the revoking
 		assert.equal(await testToken.balanceOf.call(vester1), 0, "vester1 balance is wrong");
@@ -184,14 +184,14 @@ contract('Revoke', function(accounts) {
 		assert.equal(r.logs[1].args.to, vester1, "to is wrong");
 		assert.equal(r.logs[1].args.token, testToken.address, "token is wrong");
 
-		assert((await vestingERC20.tokens.call(testToken.address, spender1)).equals(spender1Supply), "spender1SupplyOnContract is wrong");
+		assert((await vestingERC20.balanceDepositPerPersonPerToken.call(testToken.address, spender1)).equals(spender1Supply), "spender1SupplyOnContract is wrong");
 
-		var grantsS1toV1 = await vestingERC20.grants.call(testToken.address, spender1, vester1);
-		assert(grantsS1toV1[0].equals(0), "amountInitial is wrong");
+		var grantsS1toV1 = await vestingERC20.grantsPerVesterPerSpenderPerToken.call(testToken.address, spender1, vester1);
+		assert(grantsS1toV1[0].equals(0), "vestedAmount is wrong");
 		assert.equal(grantsS1toV1[1], 0, "startTime is wrong");
 		assert.equal(grantsS1toV1[2], 0, "cliffTime is wrong");
 		assert.equal(grantsS1toV1[3], 0, "endtime is wrong");
-		assert.equal(grantsS1toV1[4], 0, "amountWithdraw is wrong");
+		assert.equal(grantsS1toV1[4], 0, "withdrawnAmount is wrong");
 
 		// revoke grant before cliff -> nothing to withdrawl during the revoking
 		assert.equal(await testToken.balanceOf.call(vester1), 0, "vester1 balance is wrong");
@@ -227,14 +227,14 @@ contract('Revoke', function(accounts) {
 		assert.equal(r.logs[1].args.to, vester1, "to is wrong");
 		assert.equal(r.logs[1].args.token, testToken.address, "token is wrong");
 
-		assert((await vestingERC20.tokens.call(testToken.address, spender1)).equals(spender1Supply.minus(grantSpender1toVester1)), "spender1SupplyOnContract is wrong");
+		assert((await vestingERC20.balanceDepositPerPersonPerToken.call(testToken.address, spender1)).equals(spender1Supply.minus(grantSpender1toVester1)), "spender1SupplyOnContract is wrong");
 
-		var grantsS1toV1 = await vestingERC20.grants.call(testToken.address, spender1, vester1);
-		assert(grantsS1toV1[0].equals(0), "amountInitial is wrong");
+		var grantsS1toV1 = await vestingERC20.grantsPerVesterPerSpenderPerToken.call(testToken.address, spender1, vester1);
+		assert(grantsS1toV1[0].equals(0), "vestedAmount is wrong");
 		assert.equal(grantsS1toV1[1], 0, "startTime is wrong");
 		assert.equal(grantsS1toV1[2], 0, "cliffTime is wrong");
 		assert.equal(grantsS1toV1[3], 0, "endtime is wrong");
-		assert.equal(grantsS1toV1[4], 0, "amountWithdraw is wrong");
+		assert.equal(grantsS1toV1[4], 0, "withdrawnAmount is wrong");
 
 		// revoke grant before cliff -> nothing to withdrawl during the revoking
 		assert((await testToken.balanceOf.call(vester1)).equals(grantSpender1toVester1), "vester1 balance is wrong");
@@ -268,14 +268,14 @@ contract('Revoke', function(accounts) {
 		assert.equal(r.logs[1].args.to, vester1, "to is wrong");
 		assert.equal(r.logs[1].args.token, testToken.address, "token is wrong");
 
-		assert(areAlmostEquals(await vestingERC20.tokens.call(testToken.address, spender1),spender1Supply.minus(grantSpender1toVester1.div(2))), "spender1SupplyOnContract is wrong");
+		assert(areAlmostEquals(await vestingERC20.balanceDepositPerPersonPerToken.call(testToken.address, spender1),spender1Supply.minus(grantSpender1toVester1.div(2))), "spender1SupplyOnContract is wrong");
 
-		var grantsS1toV1 = await vestingERC20.grants.call(testToken.address, spender1, vester1);
-		assert(grantsS1toV1[0].equals(0), "amountInitial is wrong");
+		var grantsS1toV1 = await vestingERC20.grantsPerVesterPerSpenderPerToken.call(testToken.address, spender1, vester1);
+		assert(grantsS1toV1[0].equals(0), "vestedAmount is wrong");
 		assert.equal(grantsS1toV1[1], 0, "startTime is wrong");
 		assert.equal(grantsS1toV1[2], 0, "cliffTime is wrong");
 		assert.equal(grantsS1toV1[3], 0, "endtime is wrong");
-		assert.equal(grantsS1toV1[4], 0, "amountWithdraw is wrong");
+		assert.equal(grantsS1toV1[4], 0, "withdrawnAmount is wrong");
 
 		// revoke grant before cliff -> nothing to withdrawl during the revoking
 		assert(areAlmostEquals(await testToken.balanceOf.call(vester1),grantSpender1toVester1.div(2)), "vester1 balance is wrong");
@@ -312,14 +312,14 @@ contract('Revoke', function(accounts) {
 		assert.equal(r.logs[1].args.to, vester1, "to is wrong");
 		assert.equal(r.logs[1].args.token, testToken.address, "token is wrong");
 
-		assert(areAlmostEquals(await vestingERC20.tokens.call(testToken.address, spender1),spender1Supply.minus(grantSpender1toVester1.div(2))), "spender1SupplyOnContract is wrong");
+		assert(areAlmostEquals(await vestingERC20.balanceDepositPerPersonPerToken.call(testToken.address, spender1),spender1Supply.minus(grantSpender1toVester1.div(2))), "spender1SupplyOnContract is wrong");
 
-		var grantsS1toV1 = await vestingERC20.grants.call(testToken.address, spender1, vester1);
-		assert(grantsS1toV1[0].equals(0), "amountInitial is wrong");
+		var grantsS1toV1 = await vestingERC20.grantsPerVesterPerSpenderPerToken.call(testToken.address, spender1, vester1);
+		assert(grantsS1toV1[0].equals(0), "vestedAmount is wrong");
 		assert.equal(grantsS1toV1[1], 0, "startTime is wrong");
 		assert.equal(grantsS1toV1[2], 0, "cliffTime is wrong");
 		assert.equal(grantsS1toV1[3], 0, "endtime is wrong");
-		assert.equal(grantsS1toV1[4], 0, "amountWithdraw is wrong");
+		assert.equal(grantsS1toV1[4], 0, "withdrawnAmount is wrong");
 
 		// revoke grant before cliff -> nothing to withdrawl during the revoking
 		assert(areAlmostEquals(await testToken.balanceOf.call(vester1),grantSpender1toVester1.div(2)), "vester1 balance is wrong");
