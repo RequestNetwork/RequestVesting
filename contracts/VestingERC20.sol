@@ -24,7 +24,7 @@ contract VestingERC20 is Pausable{
 	}
 
 	// list of the grants (token => from => to => => Grant)
-	mapping(address => mapping(address => mapping(address => Grant))) public grants; 
+	mapping(address => mapping(address => mapping(address => Grant))) public grants;
 
 	// Ledger of the tokens hodled in this contract (token => from => balance)
 	mapping(address => mapping(address => uint256)) public tokens;
@@ -38,7 +38,6 @@ contract VestingERC20 is Pausable{
 	/**
 	 * @dev Grant a vesting to an ethereum address
 	 *
-	 * Only owner can grant token to an address vested between two dates.
 	 * If there is not enough available token on the contract, an exception is thrown
 	 *
 	 * @param _to The address where the token will be sent.
@@ -80,7 +79,6 @@ contract VestingERC20 is Pausable{
 	/**
 	 * @dev Revoke a vesting 
 	 *
-	 * Only owner can revoke a vesting
 	 * The vesting is deleted and the the tokens already released are sent to the vester
 	 *
 	 * @param _to The address of the vester.
@@ -210,7 +208,7 @@ contract VestingERC20 is Pausable{
 	/**
 	 * @dev Get the token balance of the contract
 	 * 
-	 * @return the number of tokens on the contract for _from
+	 * @return the balance of tokens on the contract for _from
 	 */
 	function getBalanceDeposit(address _token, address _from) 
 		public
@@ -221,9 +219,14 @@ contract VestingERC20 is Pausable{
 	}
 
 	/**
-	 * @dev Get the token balance of the contract
+	 * @dev Make a deposit of tokens on the contract
+	 *
+	 * Before using this function the user needs to do a token allowance from the user to the contract 
+	 *
+	 * @param _token The address of the token.
+	 * @param _amount Amount of token to deposit
 	 * 
-	 * @return the number of tokens on the contract
+	 * @return the balance of tokens on the contract for _from
 	 */
 	function deposit(address _token, uint256 _amount) 
 		public
