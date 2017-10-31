@@ -1,10 +1,9 @@
 pragma solidity ^0.4.13;
 
 import '../base/token/StandardToken.sol';
-import '../base/ownership/Ownable.sol';
 
 // Request Network Token (Kyber Style)
-contract TestToken is StandardToken, Ownable {
+contract TestToken is StandardToken {
     string  public  constant name = "Test Token";
     string  public  constant symbol = "TEST";
     uint    public  constant decimals = 18;
