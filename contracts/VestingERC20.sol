@@ -193,7 +193,7 @@ contract VestingERC20 {
 	}
 
 	function getBalanceVesting(address _token, address _from, address _to) 
-		public
+		external
 		constant 
 		returns(uint256) 
 	{
@@ -207,7 +207,7 @@ contract VestingERC20 {
 	 * @return the balance of tokens on the contract for _from
 	 */
 	function getBalanceDeposit(address _token, address _from) 
-		public
+		external
 		constant 
 		returns(uint256) 
 	{
@@ -225,7 +225,7 @@ contract VestingERC20 {
 	 * @return the balance of tokens on the contract for _from
 	 */
 	function deposit(address _token, uint256 _amount) 
-		public
+		external
 		returns(uint256) 
 	{
         require(_token!=0);
