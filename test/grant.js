@@ -397,6 +397,39 @@ contract('Grant', function(accounts) {
 	});
 
 
+	it("grant to withdraw balance deposit", async function() {
+		var grantSpender1toVester1 = (new BigNumber(10).pow(decimals)).mul(1000);
+		var startTimeSolidity = 0;
+		var cliffPeriodS1V1 = 0;
+		var grantPeriodS1V1 = 0;
+
+		// create the grant
+		var r = await vestingERC20.grantVesting(testToken.address, spender1, grantSpender1toVester1, 
+											startTimeSolidity, grantPeriodS1V1, cliffPeriodS1V1,
+											 {from: spender1});
+
+		assert.equal(r.logs[0].event, 'NewGrant', "event is wrong");
+		assert.equal(r.logs[0].args.token, testToken.address, "token is wrong");
+		assert(r.logs[0].args.vestedAmount.equals(grantSpender1toVester1), "vestedAmount is wrong");
+		assert.equal(r.logs[0].args.from, spender1, "from is wrong");
+		assert.equal(r.logs[0].args.to, spender1, "to is wrong");
+		assert(r.logs[0].args.startTime.equals(startTimeSolidity), "startTime is wrong");
+		assert(r.logs[0].args.cliffTime.equals(startTimeSolidity+cliffPeriodS1V1), "cliffTime is wrong");
+		assert(r.logs[0].args.endTime.equals(startTimeSolidity+grantPeriodS1V1), "endTime is wrong");
+
+		assert((await vestingERC20.balanceDepositPerPersonPerToken.call(testToken.address, spender1)).equals(spender1Supply.minus(grantSpender1toVester1)), "spender1SupplyOnContract is wrong");
+
+		var grantsS1toV1 = await vestingERC20.grantsPerVesterPerSpenderPerToken.call(testToken.address, spender1, spender1);
+		assert(grantsS1toV1[0].equals(grantSpender1toVester1), "vestedAmount is wrong");
+		assert.equal(grantsS1toV1[1], 0, "startTime is wrong");
+		assert.equal(grantsS1toV1[2], 0, "cliffTime is wrong");
+		assert.equal(grantsS1toV1[3], 0, "endtime is wrong");
+		assert.equal(grantsS1toV1[4], 0, "withdrawnAmount is wrong");
+
+		assert((await vestingERC20.getBalanceVesting.call(testToken.address, spender1, spender1)).equals(grantSpender1toVester1), "spender1SupplyOnContract is wrong");
+
+	});
+
 	var areAlmostEquals = function(a,b,precision) {
 		precision = precision ? precision : 1;
 		return a.sub(b).lte(a.mul(precision).div(100));
