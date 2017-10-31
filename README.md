@@ -38,21 +38,21 @@ Some specifications:
 ## Detailed description
 
 ### Overview of the flow for a grant
-1. The spender need first to allow tokens he wants to grant to the address of the vestingERC20 contract: token.allow(vestingContract.address, amount).
+1. The spender needs to create a token allowance for the vestingERC20 contract: token.allow(vestingContract.address, amount).
 
-2. The spender create a deposit on the vesting contract: vestingContract.deposit(token.address, amount).
+2. The spender creates a deposit on the vesting contract: vestingContract.deposit(token.address, amount).
 
 3. The spender is now able to create a grant: vestingContract.grantVesting(token.address, vester.address, amount, vesting_starting_time, vesting_period, cliff_period)
 
-4. a. At any moment, The spender can revoke a vesting he created. calling: vestingContract.revokeVesting(token.address, vester.address). The token already released will be send directly to the vester and the grant will be deleted. The tokens not sent to the vester will be unlocked to the spender.
+4. a. At any moment, The spender can revoke a vesting he created. calling: vestingContract.revokeVesting(token.address, vester.address). The tokens already released will be sent directly to the vester and the grant will be deleted. The tokens not sent to the vester will be unlocked for the spender.
 
 4. b. The vester can try to withdraw the released tokens at any time with the call: vestingContract.withdraw(token.address, spender.address)
 
-N.B. If a spender want to get back his unlocked tokens, he just need to create a grant to himself with a endTime before now. e.g: vestingContract.grantVesting(token.address, spender.address, amount, 0, 0, 0)
+N.B. If a spender wants to get back his unlocked tokens, he just needs to create a grant to himself with a endTime before now. e.g: vestingContract.grantVesting(token.address, spender.address, amount, 0, 0, 0)
 
 
 ### Per module description
-The system has 1 main module : the vesting contract (VestingERC20.sol).
+The system has 1 main module: the vesting contract (VestingERC20.sol).
 
 
 #### The vesting contract (VestingERC20.sol)
@@ -64,7 +64,7 @@ The 4 main externals functions are :
 - deposit - Deposit tokens to the contracts
 - grantVesting - Create a vesting
 - revokeVesting - Revoke a vesting
-- withdraw - Get the token released from a vesting
+- withdraw - Get the tokens released from a vesting
 
 and some getters :
 - getBalanceVesting - Get the amount of tokens available to withdraw for a vesting
