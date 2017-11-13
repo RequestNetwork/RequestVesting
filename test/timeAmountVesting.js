@@ -86,6 +86,7 @@ contract('Timing amount Vesting', function(accounts) {
 		for(var ind=0;ind<arrayTest.length;ind++) {
 			var a = arrayTest[ind];			
 			addsDayOnEVM(a[0]-lastTime);
+			// console.log(a[0] + " => "+await vestingERC20.getBalanceVesting(testToken.address, spender1, vester1))
 			assert( areAlmostEquals(await vestingERC20.getBalanceVesting(testToken.address, spender1, vester1), (new BigNumber(10).pow(decimals)).mul(a[1])), a[0]+" getTokenAmountReleased wrong ");
 			lastTime = a[0];
 		}

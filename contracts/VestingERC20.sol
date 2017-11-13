@@ -1,4 +1,4 @@
-pragma solidity 0.4.15;
+pragma solidity 0.4.18;
 
 import './base/token/ERC20.sol';
 import './base/math/SafeMath.sol';
@@ -60,6 +60,7 @@ contract VestingERC20 {
 		require(_to != 0);
 		require(_cliffPeriod <= _grantPeriod);
 		require(_vestedAmount != 0);
+		require(_grantPeriod==0 || _vestedAmount * _grantPeriod >= _vestedAmount); // no overflow allow here! (to make getBalanceVestingInternal safe)
 
 		// verify that there is not already a grant between the addresses for this specific contract
 		require(grantsPerVesterPerSpenderPerToken[_token][msg.sender][_to].vestedAmount==0);
@@ -182,12 +183,12 @@ contract VestingERC20 {
 		}
 		else
 		{
-			// token available = ( (vestedAmount / (endTime - startTime)) * (now - startTime) ) - withdrawnAmount
+			//  token available = vestedAmount * (now - startTime) / (endTime - startTime)  - withdrawnAmount
 			//	=> in other words : (number_of_token_granted_per_second * second_since_grant_started) - amount_already_withdraw
-			return _grant.vestedAmount.div( 
-						_grant.endTime.sub(_grant.startTime) 
-					).mul(
+			return _grant.vestedAmount.mul( 
 						now.sub(_grant.startTime)
+					).div(
+						_grant.endTime.sub(_grant.startTime) 
 					).sub(_grant.withdrawnAmount);
 		}
 	}
