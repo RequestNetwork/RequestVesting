@@ -23,29 +23,29 @@ contract VestingERC20 {
 		uint256 withdrawnAmount;
 	}
 
-	// list of the grants (token => from => to => => Grant)
+	// list of the grants (token => from => to => => Grant).
 	mapping(address => mapping(address => mapping(address => Grant))) public grantsPerVesterPerSpenderPerToken;
 
-	// Ledger of the tokens hodled in this contract (token => from => balance)
-	mapping(address => mapping(address => uint256)) public balanceDepositPerPersonPerToken;
+	// Ledger of the tokens hodled (this not a typo ;) ) in this contract (token => user => balance).
+	mapping(address => mapping(address => uint256)) public balancePerPersonPerToken;
 
 
 	event NewGrant(address from, address to, address token, uint256 vestedAmount, uint64 startTime, uint64 cliffTime, uint64 endTime);
 	event GrantRevoked(address from, address to, address token);
-    event Deposit(address token, address from, uint amount, uint balance);
-    event Withdraw(address token, address from, address to, uint amount);
+  event Deposit(address token, address from, uint amount, uint balance);
+  event TokenReleased(address token, address from, address to, uint amount);
 
 	/**
-	 * @dev Grant a vesting to an ethereum address
+	 * @dev Grant a vesting to an ethereum address.
 	 *
-	 * If there is not enough tokens available on the contract, an exception is thrown
+	 * If there is not enough tokens available on the contract, an exception is thrown.
 	 *
+	 * @param _token The ERC20 token contract address.
 	 * @param _to The address where the token will be sent.
-	 * @param _token The ERC20 token contract address
 	 * @param _vestedAmount The amount of tokens to be sent during the vesting period.
 	 * @param _startTime The time when the vesting starts.
 	 * @param _grantPeriod The period of the grant in sec.
-	 * @param _cliffPeriod The period in sec during which time the tokens cannot be withraw
+	 * @param _cliffPeriod The period in sec during which time the tokens cannot be withraw.
 	 */
 	function grantVesting(
 			address _token, 
@@ -60,9 +60,9 @@ contract VestingERC20 {
 		require(_to != 0);
 		require(_cliffPeriod <= _grantPeriod);
 		require(_vestedAmount != 0);
-		require(_grantPeriod==0 || _vestedAmount * _grantPeriod >= _vestedAmount); // no overflow allow here! (to make getBalanceVestingInternal safe)
+		require(_grantPeriod==0 || _vestedAmount * _grantPeriod >= _vestedAmount); // no overflow allow here! (to make getBalanceVestingInternal safe).
 
-		// verify that there is not already a grant between the addresses for this specific contract
+		// verify that there is not already a grant between the addresses for this specific contract.
 		require(grantsPerVesterPerSpenderPerToken[_token][msg.sender][_to].vestedAmount==0);
 
 		var cliffTime = _startTime.add(_cliffPeriod);
@@ -71,15 +71,15 @@ contract VestingERC20 {
 		grantsPerVesterPerSpenderPerToken[_token][msg.sender][_to] = Grant(_vestedAmount, _startTime, cliffTime, endTime, 0);
 
 		// update the balance
-		balanceDepositPerPersonPerToken[_token][msg.sender] = balanceDepositPerPersonPerToken[_token][msg.sender].sub(_vestedAmount);
+		balancePerPersonPerToken[_token][msg.sender] = balancePerPersonPerToken[_token][msg.sender].sub(_vestedAmount);
 
 		NewGrant(msg.sender, _to, _token, _vestedAmount, _startTime, cliffTime, endTime);
 	}
 
 	/**
-	 * @dev Revoke a vesting 
+	 * @dev Revoke a vesting
 	 *
-	 * The vesting is deleted and the tokens already released are sent to the vester
+	 * The vesting is deleted and the tokens already released are sent to the vester.
 	 *
 	 * @param _token The address of the token.
 	 * @param _to The address of the vester.
@@ -96,11 +96,11 @@ contract VestingERC20 {
 		require(_grant.vestedAmount!=0);
 
 		// send token available
-		sendTokenReleased(_token, msg.sender, _to);
+		sendTokenReleasedToBalance(_token, msg.sender, _to);
 
 		// unlock the tokens reserved for this grant
-		balanceDepositPerPersonPerToken[_token][msg.sender] = 
-			balanceDepositPerPersonPerToken[_token][msg.sender].add(
+		balancePerPersonPerToken[_token][msg.sender] = 
+			balancePerPersonPerToken[_token][msg.sender].add(
 				_grant.vestedAmount.sub(_grant.withdrawnAmount)
 			);
 
@@ -111,19 +111,24 @@ contract VestingERC20 {
 	}
 
 	/**
-	 * @dev Withdraw tokens released
+	 * @dev Send the relaesed token to the user balance and eventually withdraw
 	 *
-	 * The tokens released are sent to msg.sender and his withdrawnAmount is updated
-	 * If there is nothing to send, an exception is thrown.
+	 * Put the tokens released to the user balance.
+	 * If _doWithdraw is true, send the whole balance to the user.
 
-	 * @param _from The address of the spender.
 	 * @param _token The address of the token.
+	 * @param _from The address of the spender.
+	 * @param _doWithdraw bool, true to withdraw in the same time.
 	 */
-	function withdraw(address _token, address _from) 
+	function releaseGrant(address _token, address _from, bool _doWithdraw) 
 		external
 	{
 		// send token to the vester
-		sendTokenReleased(_token, _from, msg.sender);
+		sendTokenReleasedToBalance(_token, _from, msg.sender);
+
+		if(_doWithdraw) {
+			withdraw(_token);			
+		}
 
 		// delete grant if fully withdrawn
 		Grant storage _grant = grantsPerVesterPerSpenderPerToken[_token][_from][msg.sender];
@@ -134,9 +139,25 @@ contract VestingERC20 {
 	}
 
 	/**
-	 * @dev Send the token released to an address
+	 * @dev Withdraw tokens avaibable
 	 *
-	 * The token released for the address are sent and his withdrawnAmount are updated
+	 * The tokens are sent to msg.sender and his balancePerPersonPerToken is updated to zero.
+	 * If there is the token transfer fail, the transaction is revert.
+	 *
+	 * @param _token The address of the token.
+	 */
+	function withdraw(address _token) 
+		public
+	{
+		uint amountToSend = balancePerPersonPerToken[_token][msg.sender];
+		balancePerPersonPerToken[_token][msg.sender] = 0;
+		require(ERC20(_token).transfer(msg.sender, amountToSend));
+	}
+
+	/**
+	 * @dev Send the token released to the balance address
+	 *
+	 * The token released for the address are sent and his withdrawnAmount are updated.
 	 * If there is nothing the send, return false.
 	 * 
 	 * @param _token The address of the token.
@@ -144,9 +165,8 @@ contract VestingERC20 {
 	 * @param _to The address of the vester.
 	 * @return true if tokens have been sent.
 	 */
-	function sendTokenReleased(address _token, address _from, address _to) 
+	function sendTokenReleasedToBalance(address _token, address _from, address _to) 
 		internal
-		returns(bool)
 	{
 		Grant storage _grant = grantsPerVesterPerSpenderPerToken[_token][_from][_to];
 		uint256 amountToSend = getBalanceVestingInternal(_grant);
@@ -154,17 +174,17 @@ contract VestingERC20 {
 		// update withdrawnAmount
 		_grant.withdrawnAmount = _grant.withdrawnAmount.add(amountToSend);
 
-		Withdraw(_token, _from, _to, amountToSend);
+		TokenReleased(_token, _from, _to, amountToSend);
 
-		// send tokens to the vester
-		return ERC20(_token).transfer(_to, amountToSend);
+		// send tokens to the vester's balance
+		balancePerPersonPerToken[_token][_to] = balancePerPersonPerToken[_token][_to].add(amountToSend); 
 	}
 
 	/**
-	 * @dev Calculate the amount of tokens released for an address
+	 * @dev Calculate the amount of tokens released for a grant
 	 * 
-	 * @param _grant Grant information
-	 * @return the number of tokens released
+	 * @param _grant Grant information.
+	 * @return the number of tokens released.
 	 */
 	function getBalanceVestingInternal(Grant _grant)
 		internal
@@ -193,6 +213,14 @@ contract VestingERC20 {
 		}
 	}
 
+	/**
+	 * @dev Get the amount of tokens released for a vesting
+	 * 
+	 * @param _token The address of the token.
+	 * @param _from The address of the spender.
+	 * @param _to The address of the vester.
+	 * @return the number of tokens available.
+	 */
 	function getBalanceVesting(address _token, address _from, address _to) 
 		external
 		constant 
@@ -205,36 +233,38 @@ contract VestingERC20 {
 	/**
 	 * @dev Get the token balance of the contract
 	 * 
-	 * @return the balance of tokens on the contract for _from
+	 * @param _token The address of the token.
+	 * @param _user The address of the user.
+	 * @return the balance of tokens on the contract for _user.
 	 */
-	function getBalanceDeposit(address _token, address _from) 
+	function getBalance(address _token, address _user) 
 		external
 		constant 
 		returns(uint256) 
 	{
-		return balanceDepositPerPersonPerToken[_token][_from];
+		return balancePerPersonPerToken[_token][_user];
 	}
 
 	/**
 	 * @dev Make a deposit of tokens on the contract
 	 *
-	 * Before using this function the user needs to do a token allowance from the user to the contract 
+	 * Before using this function the user needs to do a token allowance from the user to the contract.
 	 *
 	 * @param _token The address of the token.
-	 * @param _amount Amount of token to deposit
+	 * @param _amount Amount of token to deposit.
 	 * 
-	 * @return the balance of tokens on the contract for _from
+	 * @return the balance of tokens on the contract for msg.sender.
 	 */
 	function deposit(address _token, uint256 _amount) 
 		external
 		returns(uint256) 
 	{
-        require(_token!=0);
-        require(ERC20(_token).transferFrom(msg.sender, this, _amount));
-        balanceDepositPerPersonPerToken[_token][msg.sender] = balanceDepositPerPersonPerToken[_token][msg.sender].add(_amount);
-        Deposit(_token, msg.sender, _amount, balanceDepositPerPersonPerToken[_token][msg.sender]);
+    require(_token!=0);
+    require(ERC20(_token).transferFrom(msg.sender, this, _amount));
+    balancePerPersonPerToken[_token][msg.sender] = balancePerPersonPerToken[_token][msg.sender].add(_amount);
+    Deposit(_token, msg.sender, _amount, balancePerPersonPerToken[_token][msg.sender]);
 
-		return balanceDepositPerPersonPerToken[_token][msg.sender];
+		return balancePerPersonPerToken[_token][msg.sender];
 	}
 }
 

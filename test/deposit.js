@@ -15,8 +15,9 @@ var expectThrow = async function(promise) {
     const invalidOpcode = error.message.search('invalid opcode') >= 0;
     const invalidJump = error.message.search('invalid JUMP') >= 0;
     const outOfGas = error.message.search('out of gas') >= 0;
+    const revert = error.message.search('revert') >= 0;
     assert(
-      invalidOpcode || invalidJump || outOfGas,
+      invalidOpcode || invalidJump || outOfGas || revert,
       "Expected throw, got '" + error + "' instead",
     );
     return;
@@ -83,29 +84,29 @@ contract('Deposit', function(accounts) {
 		assert(r.logs[0].args.amount.equals(spender1Supply), "amount is wrong");
 		assert(r.logs[0].args.balance.equals(spender1Supply), "balance is wrong");
 
-		assert((await vestingERC20.balanceDepositPerPersonPerToken.call(testToken.address, spender1)).equals(spender1Supply), "spender1SupplyOnContract is wrong");
-		assert((await vestingERC20.balanceDepositPerPersonPerToken.call(testToken.address, spender2)).equals(0), "spender2SupplyOnContract is wrong");
+		assert((await vestingERC20.balancePerPersonPerToken.call(testToken.address, spender1)).equals(spender1Supply), "spender1SupplyOnContract is wrong");
+		assert((await vestingERC20.balancePerPersonPerToken.call(testToken.address, spender2)).equals(0), "spender2SupplyOnContract is wrong");
 	});
 
 	it("deposit without approval", async function() {		
 		// 0 approval
 		await expectThrow(vestingERC20.deposit(testToken.address, spender1Supply, {from: spender1}));
-		assert((await vestingERC20.balanceDepositPerPersonPerToken.call(testToken.address, spender1)).equals(0), "spender1SupplyOnContract is wrong");
+		assert((await vestingERC20.balancePerPersonPerToken.call(testToken.address, spender1)).equals(0), "spender1SupplyOnContract is wrong");
 
 		// appoval from someone else
 		await testToken.approve(vestingERC20.address, spender2Supply, {from: spender2});
 		await expectThrow(vestingERC20.deposit(testToken.address, spender2Supply, {from: spender1}));
-		assert((await vestingERC20.balanceDepositPerPersonPerToken.call(testToken.address, spender1)).equals(0), "spender1SupplyOnContract is wrong");
+		assert((await vestingERC20.balancePerPersonPerToken.call(testToken.address, spender1)).equals(0), "spender1SupplyOnContract is wrong");
 
 		// appoval for another token
 		await testToken2.approve(vestingERC20.address, spender1Supply, {from: spender1});
 		await expectThrow(vestingERC20.deposit(testToken.address, spender1Supply, {from: spender1}));
-		assert((await vestingERC20.balanceDepositPerPersonPerToken.call(testToken.address, spender1)).equals(0), "spender1SupplyOnContract is wrong");
+		assert((await vestingERC20.balancePerPersonPerToken.call(testToken.address, spender1)).equals(0), "spender1SupplyOnContract is wrong");
 
 		// not enough approval
 		await testToken.approve(vestingERC20.address, spender1Supply.minus(1), {from: spender1});
 		await expectThrow(vestingERC20.deposit(testToken.address, spender1Supply, {from: spender1}));
-		assert((await vestingERC20.balanceDepositPerPersonPerToken.call(testToken.address, spender1)).equals(0), "spender1SupplyOnContract is wrong");
+		assert((await vestingERC20.balancePerPersonPerToken.call(testToken.address, spender1)).equals(0), "spender1SupplyOnContract is wrong");
 	});
 
 
@@ -117,7 +118,7 @@ contract('Deposit', function(accounts) {
 		assert.equal(r.logs[0].args.token, testToken.address, "token is wrong");
 		assert(r.logs[0].args.amount.equals(spender1Supply.div(2)), "amount is wrong");
 		assert(r.logs[0].args.balance.equals(spender1Supply.div(2)), "balance is wrong");
-		assert((await vestingERC20.balanceDepositPerPersonPerToken.call(testToken.address, spender1)).equals(spender1Supply.div(2)), "spender1SupplyOnContract is wrong");
+		assert((await vestingERC20.balancePerPersonPerToken.call(testToken.address, spender1)).equals(spender1Supply.div(2)), "spender1SupplyOnContract is wrong");
 
 
 		r = await vestingERC20.deposit(testToken.address, spender1Supply.div(2), {from: spender1});
@@ -125,7 +126,7 @@ contract('Deposit', function(accounts) {
 		assert.equal(r.logs[0].args.token, testToken.address, "token is wrong");
 		assert(r.logs[0].args.amount.equals(spender1Supply.div(2)), "amount is wrong");
 		assert(r.logs[0].args.balance.equals(spender1Supply), "balance is wrong");
-		assert((await vestingERC20.balanceDepositPerPersonPerToken.call(testToken.address, spender1)).equals(spender1Supply), "spender1SupplyOnContract is wrong");
+		assert((await vestingERC20.balancePerPersonPerToken.call(testToken.address, spender1)).equals(spender1Supply), "spender1SupplyOnContract is wrong");
 
 	});
 
@@ -140,14 +141,14 @@ contract('Deposit', function(accounts) {
 		assert.equal(r.logs[0].args.token, testToken.address, "token is wrong");
 		assert(r.logs[0].args.amount.equals(spender1Supply), "amount is wrong");
 		assert(r.logs[0].args.balance.equals(spender1Supply), "balance is wrong");
-		assert((await vestingERC20.balanceDepositPerPersonPerToken.call(testToken.address, spender1)).equals(spender1Supply), "spender1SupplyOnContract is wrong");
+		assert((await vestingERC20.balancePerPersonPerToken.call(testToken.address, spender1)).equals(spender1Supply), "spender1SupplyOnContract is wrong");
 
 		var r = await vestingERC20.deposit(testToken2.address, spender1Supply, {from: spender1});
 		assert.equal(r.logs[0].event, 'Deposit', "event is wrong");
 		assert.equal(r.logs[0].args.token, testToken2.address, "token is wrong");
 		assert(r.logs[0].args.amount.equals(spender1Supply), "amount is wrong");
 		assert(r.logs[0].args.balance.equals(spender1Supply), "balance is wrong");
-		assert((await vestingERC20.balanceDepositPerPersonPerToken.call(testToken2.address, spender1)).equals(spender1Supply), "spender1SupplyOnContract is wrong");
+		assert((await vestingERC20.balancePerPersonPerToken.call(testToken2.address, spender1)).equals(spender1Supply), "spender1SupplyOnContract is wrong");
 
 
 		await testToken.approve(vestingERC20.address, spender2Supply, {from: spender2});
@@ -158,14 +159,14 @@ contract('Deposit', function(accounts) {
 		assert.equal(r.logs[0].args.token, testToken.address, "token is wrong");
 		assert(r.logs[0].args.amount.equals(spender2Supply), "amount is wrong");
 		assert(r.logs[0].args.balance.equals(spender2Supply), "balance is wrong");
-		assert((await vestingERC20.balanceDepositPerPersonPerToken.call(testToken.address, spender2)).equals(spender2Supply), "spender2SupplyOnContract is wrong");
+		assert((await vestingERC20.balancePerPersonPerToken.call(testToken.address, spender2)).equals(spender2Supply), "spender2SupplyOnContract is wrong");
 
 		var r = await vestingERC20.deposit(testToken2.address, spender2Supply, {from: spender2});
 		assert.equal(r.logs[0].event, 'Deposit', "event is wrong");
 		assert.equal(r.logs[0].args.token, testToken2.address, "token is wrong");
 		assert(r.logs[0].args.amount.equals(spender2Supply), "amount is wrong");
 		assert(r.logs[0].args.balance.equals(spender2Supply), "balance is wrong");
-		assert((await vestingERC20.balanceDepositPerPersonPerToken.call(testToken2.address, spender2)).equals(spender2Supply), "spender2SupplyOnContract is wrong");
+		assert((await vestingERC20.balancePerPersonPerToken.call(testToken2.address, spender2)).equals(spender2Supply), "spender2SupplyOnContract is wrong");
 	});
 
 
