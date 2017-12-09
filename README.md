@@ -74,5 +74,12 @@ and some getters :
 ### Use of zeppelin code
 We use open-zeppling code for `SafeMath`. And `ERC20` logic.
 
-# Testrpc commandline
-launchTestrpc.bat or launchTestrpc.sh
+# Run testunit
+You need first to install the truffle: 
+`npm install truffle -g`
+then bignumber.js library: 
+`npm install bignumber.js`
+In another terminal, launch testrpc:
+`launchTestrpc.bat` or `launchTestrpc.sh`
+and finally launch the tests: 
+`truffle test`
