@@ -92,7 +92,7 @@ contract('releaseGrant with withdraw', function(accounts) {
 		var grantPeriodS1V1 = 1000*dayInsecond;
 
 		// create the grant
-		var r = await vestingERC20.grantVesting(testToken.address, vester1, grantSpender1toVester1, 
+		var r = await vestingERC20.createVesting(testToken.address, vester1, grantSpender1toVester1, 
 											startTimeSolidity, grantPeriodS1V1, cliffPeriodS1V1,
 											 {from: spender1});
 
@@ -100,15 +100,15 @@ contract('releaseGrant with withdraw', function(accounts) {
 
 		// event TokenReleased(address token, address from, address to, uint amount)
 		assert.equal(r.logs[0].event, 'TokenReleased', "event is wrong");
-		assert.equal(r.logs[0].args.from, spender1, "from is wrong");
-		assert.equal(r.logs[0].args.to, vester1, "to is wrong");
+		assert.equal(r.logs[0].args.granter, spender1, "from is wrong");
+		assert.equal(r.logs[0].args.vester, vester1, "to is wrong");
 		assert.equal(r.logs[0].args.token, testToken.address, "token is wrong");
 		assert(areAlmostEquals(r.logs[0].args.amount, grantSpender1toVester1.div(4)), "amount is wrong");
 
-		assert(areAlmostEquals(await vestingERC20.balancePerPersonPerToken.call(testToken.address, spender1),spender1Supply.minus(grantSpender1toVester1)), "spender1SupplyOnContract is wrong");
-		assert(areAlmostEquals(await vestingERC20.balancePerPersonPerToken.call(testToken.address, vester1),0), "vester1 balance is wrong");
+		assert(areAlmostEquals(await vestingERC20.getContractBalance.call(testToken.address, spender1),spender1Supply.minus(grantSpender1toVester1)), "spender1SupplyOnContract is wrong");
+		assert(areAlmostEquals(await vestingERC20.getContractBalance.call(testToken.address, vester1),0), "vester1 balance is wrong");
 
-		var grantsS1toV1 = await vestingERC20.grantsPerVesterPerSpenderPerToken.call(testToken.address, spender1, vester1);
+		var grantsS1toV1 = await vestingERC20.grantPerTokenGranterVester.call(testToken.address, spender1, vester1);
 		assert(grantsS1toV1[0].equals(grantSpender1toVester1), "vestedAmount is wrong");
 		assert.equal(grantsS1toV1[1], startTimeSolidity, "startTime is wrong");
 		assert.equal(grantsS1toV1[2], startTimeSolidity+cliffPeriodS1V1, "cliffTime is wrong");
@@ -126,14 +126,14 @@ contract('releaseGrant with withdraw', function(accounts) {
 		var grantPeriodS1V1 = 1000*dayInsecond;
 
 		// create the grant
-		var r = await vestingERC20.grantVesting(testToken.address, vester1, grantSpender1toVester1, 
+		var r = await vestingERC20.createVesting(testToken.address, vester1, grantSpender1toVester1, 
 											startTimeSolidity, grantPeriodS1V1, cliffPeriodS1V1,
 											 {from: spender1});
 
 		await vestingERC20.releaseGrant(0, spender1, false, {from: vester1});
 
-		assert(areAlmostEquals(await vestingERC20.balancePerPersonPerToken.call(testToken.address, spender1),spender1Supply.minus(grantSpender1toVester1)), "spender1SupplyOnContract is wrong");
-		assert(areAlmostEquals(await vestingERC20.balancePerPersonPerToken.call(testToken.address, vester1),0), "vester1 balance is wrong");
+		assert(areAlmostEquals(await vestingERC20.getContractBalance.call(testToken.address, spender1),spender1Supply.minus(grantSpender1toVester1)), "spender1SupplyOnContract is wrong");
+		assert(areAlmostEquals(await vestingERC20.getContractBalance.call(testToken.address, vester1),0), "vester1 balance is wrong");
 
 		assert(areAlmostEquals(await testToken.balanceOf.call(vester1),0), "vester1 balance is wrong");
 	});
@@ -146,7 +146,7 @@ contract('releaseGrant with withdraw', function(accounts) {
 		var grantPeriodS1V1 = 1000*dayInsecond;
 
 		// create the grant
-		var r = await vestingERC20.grantVesting(testToken.address, vester1, grantSpender1toVester1, 
+		var r = await vestingERC20.createVesting(testToken.address, vester1, grantSpender1toVester1, 
 											startTimeSolidity, grantPeriodS1V1, cliffPeriodS1V1,
 											 {from: spender1});
 
@@ -154,13 +154,13 @@ contract('releaseGrant with withdraw', function(accounts) {
 
 		// event TokenReleased(address token, address from, address to, uint amount)
 		assert.equal(r.logs[0].event, 'TokenReleased', "event is wrong");
-		assert.equal(r.logs[0].args.from, 0, "from is wrong");
-		assert.equal(r.logs[0].args.to, vester1, "to is wrong");
+		assert.equal(r.logs[0].args.granter, 0, "from is wrong");
+		assert.equal(r.logs[0].args.vester, vester1, "to is wrong");
 		assert.equal(r.logs[0].args.token, testToken.address, "token is wrong");
 		assert(areAlmostEquals(r.logs[0].args.amount, 0), "amount is wrong");
 
-		assert(areAlmostEquals(await vestingERC20.balancePerPersonPerToken.call(testToken.address, spender1),spender1Supply.minus(grantSpender1toVester1)), "spender1SupplyOnContract is wrong");
-		assert(areAlmostEquals(await vestingERC20.balancePerPersonPerToken.call(testToken.address, vester1),0), "vester1 balance is wrong");
+		assert(areAlmostEquals(await vestingERC20.getContractBalance.call(testToken.address, spender1),spender1Supply.minus(grantSpender1toVester1)), "spender1SupplyOnContract is wrong");
+		assert(areAlmostEquals(await vestingERC20.getContractBalance.call(testToken.address, vester1),0), "vester1 balance is wrong");
 
 		assert(areAlmostEquals(await testToken.balanceOf.call(vester1),0), "vester1 balance is wrong");
 	});
@@ -173,7 +173,7 @@ contract('releaseGrant with withdraw', function(accounts) {
 		var grantPeriodS1V1 = 1000*dayInsecond;
 
 		// create the grant
-		var r = await vestingERC20.grantVesting(testToken.address, vester1, grantSpender1toVester1, 
+		var r = await vestingERC20.createVesting(testToken.address, vester1, grantSpender1toVester1, 
 											startTimeSolidity, grantPeriodS1V1, cliffPeriodS1V1,
 											 {from: spender1});
 
@@ -181,13 +181,13 @@ contract('releaseGrant with withdraw', function(accounts) {
 
 		// event TokenReleased(address token, address from, address to, uint amount)
 		assert.equal(r.logs[0].event, 'TokenReleased', "event is wrong");
-		assert.equal(r.logs[0].args.from, spender1, "from is wrong");
-		assert.equal(r.logs[0].args.to, vester1, "to is wrong");
+		assert.equal(r.logs[0].args.granter, spender1, "from is wrong");
+		assert.equal(r.logs[0].args.vester, vester1, "to is wrong");
 		assert.equal(r.logs[0].args.token, testToken2.address, "token is wrong");
 		assert(areAlmostEquals(r.logs[0].args.amount, 0), "amount is wrong");
 
-		assert(areAlmostEquals(await vestingERC20.balancePerPersonPerToken.call(testToken.address, spender1),spender1Supply.minus(grantSpender1toVester1)), "spender1SupplyOnContract is wrong");
-		assert(areAlmostEquals(await vestingERC20.balancePerPersonPerToken.call(testToken.address, vester1),0), "vester1 balance is wrong");
+		assert(areAlmostEquals(await vestingERC20.getContractBalance.call(testToken.address, spender1),spender1Supply.minus(grantSpender1toVester1)), "spender1SupplyOnContract is wrong");
+		assert(areAlmostEquals(await vestingERC20.getContractBalance.call(testToken.address, vester1),0), "vester1 balance is wrong");
 
 		assert(areAlmostEquals(await testToken2.balanceOf.call(vester1),0), "vester1 balance is wrong");
 	});
@@ -200,7 +200,7 @@ contract('releaseGrant with withdraw', function(accounts) {
 		var grantPeriodS1V1 = 1000*dayInsecond;
 
 		// create the grant
-		var r = await vestingERC20.grantVesting(testToken.address, vester1, grantSpender1toVester1, 
+		var r = await vestingERC20.createVesting(testToken.address, vester1, grantSpender1toVester1, 
 											startTimeSolidity, grantPeriodS1V1, cliffPeriodS1V1,
 											 {from: spender1});
 
@@ -209,13 +209,13 @@ contract('releaseGrant with withdraw', function(accounts) {
 
 		// event TokenReleased(address token, address from, address to, uint amount)
 		assert.equal(r.logs[0].event, 'TokenReleased', "event is wrong");
-		assert.equal(r.logs[0].args.from, spender1, "from is wrong");
-		assert.equal(r.logs[0].args.to, vester1, "to is wrong");
+		assert.equal(r.logs[0].args.granter, spender1, "from is wrong");
+		assert.equal(r.logs[0].args.vester, vester1, "to is wrong");
 		assert.equal(r.logs[0].args.token, testToken.address, "token is wrong");
 		assert(areAlmostEquals(r.logs[0].args.amount, grantSpender1toVester1), "amount is wrong");
 
 
-		var grantsS1toV1 = await vestingERC20.grantsPerVesterPerSpenderPerToken.call(testToken.address, spender1, vester1);
+		var grantsS1toV1 = await vestingERC20.grantPerTokenGranterVester.call(testToken.address, spender1, vester1);
 		assert(grantsS1toV1[0].equals(0), "vestedAmount is wrong");
 		assert.equal(grantsS1toV1[1], 0, "startTime is wrong");
 		assert.equal(grantsS1toV1[2], 0, "cliffTime is wrong");
@@ -223,8 +223,8 @@ contract('releaseGrant with withdraw', function(accounts) {
 		assert(areAlmostEquals(grantsS1toV1[4], 0), "withdrawnAmount is wrong");
 
 
-		assert(areAlmostEquals(await vestingERC20.balancePerPersonPerToken.call(testToken.address, spender1),spender1Supply.minus(grantSpender1toVester1)), "spender1SupplyOnContract is wrong");
-		assert(areAlmostEquals(await vestingERC20.balancePerPersonPerToken.call(testToken.address, vester1),0), "vester1 balance is wrong");
+		assert(areAlmostEquals(await vestingERC20.getContractBalance.call(testToken.address, spender1),spender1Supply.minus(grantSpender1toVester1)), "spender1SupplyOnContract is wrong");
+		assert(areAlmostEquals(await vestingERC20.getContractBalance.call(testToken.address, vester1),0), "vester1 balance is wrong");
 
 		assert(areAlmostEquals(await testToken.balanceOf.call(vester1),grantSpender1toVester1), "vester1 balance is wrong");
 	});
@@ -236,7 +236,7 @@ contract('releaseGrant with withdraw', function(accounts) {
 		var grantPeriodS1V1 = 1000*dayInsecond;
 
 		// create the grant
-		var r = await vestingERC20.grantVesting(testToken.address, vester1, grantSpender1toVester1, 
+		var r = await vestingERC20.createVesting(testToken.address, vester1, grantSpender1toVester1, 
 											startTimeSolidity, grantPeriodS1V1, cliffPeriodS1V1,
 											 {from: spender1});
 
@@ -247,14 +247,14 @@ contract('releaseGrant with withdraw', function(accounts) {
 
 		// event TokenReleased(address token, address from, address to, uint amount)
 		assert.equal(r.logs[0].event, 'TokenReleased', "event is wrong");
-		assert.equal(r.logs[0].args.from, spender1, "from is wrong");
-		assert.equal(r.logs[0].args.to, vester1, "to is wrong");
+		assert.equal(r.logs[0].args.granter, spender1, "from is wrong");
+		assert.equal(r.logs[0].args.vester, vester1, "to is wrong");
 		assert.equal(r.logs[0].args.token, testToken.address, "token is wrong");
 		assert(areAlmostEquals(r.logs[0].args.amount, 0), "amount is wrong");
 
 
-		assert(areAlmostEquals(await vestingERC20.balancePerPersonPerToken.call(testToken.address, spender1),spender1Supply.minus(grantSpender1toVester1)), "spender1SupplyOnContract is wrong");
-		assert(areAlmostEquals(await vestingERC20.balancePerPersonPerToken.call(testToken.address, vester1),0), "vester1 balance is wrong");
+		assert(areAlmostEquals(await vestingERC20.getContractBalance.call(testToken.address, spender1),spender1Supply.minus(grantSpender1toVester1)), "spender1SupplyOnContract is wrong");
+		assert(areAlmostEquals(await vestingERC20.getContractBalance.call(testToken.address, vester1),0), "vester1 balance is wrong");
 
 		assert(areAlmostEquals(await testToken.balanceOf.call(vester1),grantSpender1toVester1), "vester1 balance is wrong");
 	});
@@ -266,7 +266,7 @@ contract('releaseGrant with withdraw', function(accounts) {
 		var grantPeriodS1V1 = 1000*dayInsecond;
 
 		// create the grant
-		var r = await vestingERC20.grantVesting(testToken.address, vester1, grantSpender1toVester1, 
+		var r = await vestingERC20.createVesting(testToken.address, vester1, grantSpender1toVester1, 
 											startTimeSolidity, grantPeriodS1V1, cliffPeriodS1V1,
 											 {from: spender1});
 
@@ -274,14 +274,14 @@ contract('releaseGrant with withdraw', function(accounts) {
 
 		// event TokenReleased(address token, address from, address to, uint amount)
 		assert.equal(r.logs[0].event, 'TokenReleased', "event is wrong");
-		assert.equal(r.logs[0].args.from, spender1, "from is wrong");
-		assert.equal(r.logs[0].args.to, vester2, "to is wrong");
+		assert.equal(r.logs[0].args.granter, spender1, "from is wrong");
+		assert.equal(r.logs[0].args.vester, vester2, "to is wrong");
 		assert.equal(r.logs[0].args.token, testToken.address, "token is wrong");
 		assert(areAlmostEquals(r.logs[0].args.amount, 0), "amount is wrong");
 
 
-		assert(areAlmostEquals(await vestingERC20.balancePerPersonPerToken.call(testToken.address, spender1),spender1Supply.minus(grantSpender1toVester1)), "spender1SupplyOnContract is wrong");
-		assert(areAlmostEquals(await vestingERC20.balancePerPersonPerToken.call(testToken.address, vester2),0), "vester2 balance is wrong");
+		assert(areAlmostEquals(await vestingERC20.getContractBalance.call(testToken.address, spender1),spender1Supply.minus(grantSpender1toVester1)), "spender1SupplyOnContract is wrong");
+		assert(areAlmostEquals(await vestingERC20.getContractBalance.call(testToken.address, vester2),0), "vester2 balance is wrong");
 
 		assert(areAlmostEquals(await testToken.balanceOf.call(vester2),0), "vester2 balance is wrong");
 	});

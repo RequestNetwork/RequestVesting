@@ -69,14 +69,14 @@ contract('Timing amount Vesting', function(accounts) {
 	});
 
 	it("check amount throug time", async function() {
-		// grantVesting by owner
+		// createVesting by owner
 		var grantSpender1toVester1 = (new BigNumber(10).pow(decimals)).mul(1000);
 		var startTimeSolidity = currentTimeStamp;
 		var cliffPeriod = 200*dayInsecond;
 		var grantPeriod = 1000*dayInsecond;
 
 
-		await vestingERC20.grantVesting(testToken.address, vester1, grantSpender1toVester1, 
+		await vestingERC20.createVesting(testToken.address, vester1, grantSpender1toVester1, 
 											startTimeSolidity, grantPeriod, cliffPeriod,
 											 {from: spender1});
 
@@ -87,8 +87,8 @@ contract('Timing amount Vesting', function(accounts) {
 		for(var ind=0;ind<arrayTest.length;ind++) {
 			var a = arrayTest[ind];			
 			addsDayOnEVM(a[0]-lastTime);
-			// console.log(a[0] + " => "+await vestingERC20.getBalanceVesting(testToken.address, spender1, vester1))
-			assert( areAlmostEquals(await vestingERC20.getBalanceVesting(testToken.address, spender1, vester1), (new BigNumber(10).pow(decimals)).mul(a[1])), a[0]+" getTokenAmountReleased wrong ");
+			// console.log(a[0] + " => "+await vestingERC20.getVestingBalance(testToken.address, spender1, vester1))
+			assert( areAlmostEquals(await vestingERC20.getVestingBalance(testToken.address, spender1, vester1), (new BigNumber(10).pow(decimals)).mul(a[1])), a[0]+" getTokenAmountReleased wrong ");
 			lastTime = a[0];
 		}
 
