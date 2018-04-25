@@ -3,7 +3,9 @@ In this document, we describe the ERC20 vesting contract specification and imple
 and give an overview over the smart contracts structure.
 
 ## Contract address
+
 Main net : 0x45e6ff0885ebf5d616e460d14855455d92d6cc04
+
 Rinkeby : 0x7e161F89e4a3C3D785645e0591598E5066a60Da9
 
 ## Informal Specification
