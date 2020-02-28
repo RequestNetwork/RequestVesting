@@ -2,9 +2,14 @@
 In this document, we describe the ERC20 vesting contract specification and implementation,
 and give an overview over the smart contracts structure.
 
+## Contract address
+
+Main net : 0x45e6ff0885ebf5d616e460d14855455d92d6cc04
+
+Rinkeby : 0x7e161F89e4a3C3D785645e0591598E5066a60Da9
 
 ## Informal Specification
-Here, the "spender" is the one who create the vesting and the "vester" is the one who will get the tokens.
+Here, the "granter" is the one who create the vesting and the "vester" is the one who will get the tokens.
 
 A vesting is an amount of a specific token given progressively to someone. The period is defined by the `starting time` (the date you start to accumulate tokens), the `grant period` (number of seconds of the grant) and the `cliff period` (number of seconds before the withdraw is possible).
 
@@ -38,17 +43,15 @@ Some specifications:
 ## Detailed description
 
 ### Overview of the flow for a grant
-1. The spender needs to create a token allowance for the vestingERC20 contract: token.allow(vestingContract.address, amount).
+1. The granter needs to create a token allowance for the vestingERC20 contract: token.allow(vestingContract.address, amount).
 
-2. The spender creates a deposit on the vesting contract: vestingContract.deposit(token.address, amount).
+2. The granter creates a deposit on the vesting contract: vestingContract.deposit(token.address, amount).
 
-3. The spender is now able to create a grant: vestingContract.grantVesting(token.address, vester.address, amount, vesting_starting_time, vesting_period, cliff_period)
+3. The granter is now able to create a grant: vestingContract.createVesting(token.address, vester.address, amount, vesting_starting_time, vesting_period_in_second, cliff_period_in_second)
 
-4. a. At any moment, The spender can revoke a vesting he created. calling: vestingContract.revokeVesting(token.address, vester.address). The tokens already released will be sent directly to the vester and the grant will be deleted. The tokens not sent to the vester will be unlocked for the spender.
+4. a. At any moment, The granter can revoke a vesting he created. calling: vestingContract.revokeVesting(token.address, vester.address). The tokens already released will be sent directly to the vester and the grant will be deleted. The tokens not sent to the vester will be unlocked for the granter.
 
-4. b. The vester can try to withdraw the released tokens at any time with the call: vestingContract.withdraw(token.address, spender.address)
-
-N.B. If a spender wants to get back his unlocked tokens, he just needs to create a grant to himself with a endTime before now. e.g: vestingContract.grantVesting(token.address, spender.address, amount, 0, 0, 0)
+4. b. The vester can try to release the tokens at any time with the call: vestingContract.withdraw(token.address, granter.address, doWithdraw). If doWithdraw is true, the token are directly send to the vester address. Otherwise, the token are available to withdraw or to create a grant.
 
 
 ### Per module description
@@ -62,13 +65,14 @@ It uses `SafeMath.sol` by Open Zeppelin and `SafeMath64.sol` (which is `SafeMath
 
 The 4 main externals functions are :
 - deposit - Deposit tokens to the contracts
-- grantVesting - Create a vesting
-- revokeVesting - Revoke a vesting
+- createVesting - Create a vesting (from the granter)
+- revokeVesting - Revoke a vesting (from the granter)
+- releaseGrant - Release (and eventually withdraw) the unlocked tokens of a vesting (from the vester) 
 - withdraw - Get the tokens released from a vesting
 
 and some getters :
-- getBalanceVesting - Get the amount of tokens available to withdraw for a vesting
-- getBalanceDeposit - Get the amount of tokens of a user not locked on vestings
+- getVestingBalance - Get the amount of tokens unlocked for a vesting
+- getContractBalance - Get the amount of tokens available on the contract for a user
 
 
 ### Use of zeppelin code
